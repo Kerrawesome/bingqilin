@@ -1,6 +1,6 @@
 # Bingqilin Media
 A simple proof-of-concept entertainment platform. 
->[https://bingchilling.pages.dev/](https://bingchilling.pages.dev/)
+>[https://bingqilin.pages.dev/](https://bingqilin.pages.dev/)
 
 ## How it works
 
