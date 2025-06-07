@@ -98,7 +98,7 @@
 
         const showPlayer = (type, id, season, episode) => {
             const path = type === 'tv' ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
-            playerContainer.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/${path}" allowfullscreen></iframe>`;
+            playerContainer.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
