@@ -16,7 +16,7 @@
 	h2 { margin: 25px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee; }
         #tabs button { margin: 10px 5px 15px 0; padding: 5px; }
 	*, *::before, *::after { box-sizing: border-box } 
-        .grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 	@media (min-width: 500px) { .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
 	.item > div { word-break: break-word; overflow-wrap: break-word; }
         .item { padding: 8px; border: 1px solid #ddd; cursor: pointer; display: flex; flex-direction: column; text-align: center; justify-content: center; }
