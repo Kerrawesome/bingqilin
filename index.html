@@ -11,7 +11,6 @@
     <style>
         header { display: flex; align-items: center; }
         header img { height: 3em; margin-right: 1em; }
-	
         input { width: 100%; max-width: 800px; padding: 8px; margin: 15px 0; box-sizing: border-box; }
         #player-container iframe { width: 100%; aspect-ratio: 16 / 9; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
@@ -33,16 +32,13 @@
         <input type="text" id="searchInput" placeholder="Search for movies or TV shows...">
         <div id="player-container"></div>
         <div id="content"></div>
-
     <script>
         const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM';
         const searchInput = document.getElementById('searchInput'), contentDiv = document.getElementById('content');
         const playerContainer = document.getElementById('player-container');
         const loaderHtml = '<div class="loader"></div>';
         let searchTimeout;
-
         const apiFetch = (path) => fetch(`https://api.themoviedb.org/3/${path}`, { headers: { 'Authorization': `Bearer ${apiKey}` } }).then(res => res.json());
-
         const searchMedia = async () => {
             const query = searchInput.value;
             if (!query) { contentDiv.innerHTML = ''; playerContainer.innerHTML = ''; return; }
@@ -56,7 +52,6 @@
                     let title = i.title || i.name;
                     let year = '';
                     let mediaTag = '';
-
                    if (i.media_type === 'movie' && i.release_date) {
                         year = ` (${new Date(i.release_date).getFullYear()})`;
                         mediaTag = 'Movie';
@@ -71,14 +66,12 @@
                             </div>`;
                 }).join('');
         };
-
         const showDetails = async (type, id) => {
             playerContainer.innerHTML = '';
             contentDiv.className = '';
             contentDiv.innerHTML = loaderHtml;
             const data = await apiFetch(`${type}/${id}`);
             let detailsHtml = `<h2>${data.title || data.name}</h2><p>${data.overview}</p>`;
-
             if (type === 'movie') {
                 showPlayer('movie', id);
             } else {
@@ -86,7 +79,6 @@
             }
             contentDiv.innerHTML = detailsHtml;
         };
-
         const showEpisodes = async (tvId, season, seasonName) => {
             playerContainer.innerHTML = '';
             contentDiv.className = '';
@@ -95,13 +87,11 @@
             const episodesHtml = data.episodes.map(ep => `<div class="item" onclick="showPlayer('tv', ${tvId}, ${season}, ${ep.episode_number})"><img src="${ep.still_path ? `https://image.tmdb.org/t/p/w200${ep.still_path}` : 'https://via.placeholder.com/200x113.png?text=No+Image'}"><b>Ep ${ep.episode_number}: ${ep.name}</b><p style="font-size:0.8em;text-align:left;margin:5px 0 0 0;">${ep.overview}</p></div>`).join('');
             contentDiv.innerHTML = `<button onclick="showDetails('tv', ${tvId})">← Back to Seasons</button><h2>${seasonName}</h2><div class="grid">${episodesHtml}</div>`;
         };
-
         const showPlayer = (type, id, season, episode) => {
             const path = type === 'tv' ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
             playerContainer.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
-
         searchInput.oninput = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMedia, 300); };
     </script>
 </body>
