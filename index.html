@@ -1,97 +1,100 @@
 <!DOCTYPE html>
-<html>
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="https://em-content.zobj.net/source/google/387/soft-ice-cream_1f366.png" type="image/png">
-    <title>Bing Qilin Media</title>
+    <title>Bing Chilling Media</title>
     <style>
         header { display: flex; align-items: center; }
         header img { height: 3em; margin-right: 1em; }
         input { width: 100%; max-width: 800px; padding: 8px; margin: 15px 0; box-sizing: border-box; }
-        #player-container iframe { width: 100%; aspect-ratio: 16 / 9; }
+        #player-container iframe { width: 100%; aspect-ratio: 16 / 9; border: none; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .item { border: 1px solid #ccc; cursor: pointer; text-align: center; padding: 5px; }
-        .item img { max-width: 100%; height: auto; display: block; }
-        .item div, .item b { padding: 5px; }
+        .item { border: 1px solid #ccc; cursor: pointer; text-align: center; padding: 5px; background-color: #fff; transition: transform 0.2s; overflow: hidden; }
+        .item:hover { transform: scale(1.03); box-shadow: 0 4px 8px rgba(0,0,0,0.1);  }
+        .item img { max-width: 100%; height: auto; display: block;  }
+        .item div, .item b { padding: 5px;  }
+        .item-info { font-size: 0.9em; color: #555;  }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #333; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 50px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .item-info { font-size: 1em; color: #555; }
-	 @media (max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media (max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
     </style>
 </head>
 <body>
-	<header>
-            <img src="https://em-content.zobj.net/source/google/387/soft-ice-cream_1f366.png" alt="Logo">
-            <h1>Bing Qilin Media</h1>
-	</header>
-        <input type="text" id="searchInput" placeholder="Search for movies or TV shows...">
-        <div id="player-container"></div>
-        <div id="content"></div>
-    <script>
-        const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM';
-        const searchInput = document.getElementById('searchInput'), contentDiv = document.getElementById('content');
-        const playerContainer = document.getElementById('player-container');
-        const loaderHtml = '<div class="loader"></div>';
-        let searchTimeout;
-        const apiFetch = (path) => fetch(`https://api.themoviedb.org/3/${path}`, { headers: { 'Authorization': `Bearer ${apiKey}` } }).then(res => res.json());
-        const searchMedia = async () => {
-            const query = searchInput.value;
-            if (!query) { contentDiv.innerHTML = ''; playerContainer.innerHTML = ''; return; }
-            contentDiv.className = '';
-            contentDiv.innerHTML = loaderHtml;
-            const data = await apiFetch(`search/multi?query=${encodeURIComponent(query)}`);
-            contentDiv.className = 'grid';
-            contentDiv.innerHTML = data.results
-                .filter(i => (i.media_type === 'movie' || i.media_type === 'tv') && i.poster_path)
-                .map(i => {
-                    let title = i.title || i.name;
-                    let year = '';
-                    let mediaTag = '';
-                   if (i.media_type === 'movie' && i.release_date) {
-                        year = ` (${new Date(i.release_date).getFullYear()})`;
-                        mediaTag = 'Movie';
-                    } else if (i.media_type === 'tv' && i.first_air_date) {
-                        year = ` (${new Date(i.first_air_date).getFullYear()})`;
-                        mediaTag = 'TV Show';
-                    }
-                    return `<div class="item" onclick="showDetails('${i.media_type}', ${i.id})">
-                                <img src="https://image.tmdb.org/t/p/w200${i.poster_path}" alt="Poster">
-                                <div>${title}</div>
-                                <div class="item-info">${mediaTag}${year}</div>
-                            </div>`;
+    <header> <img src="https://em-content.zobj.net/source/google/387/soft-ice-cream_1f366.png" alt="Logo"> <h1>Bing Chilling Media</h1> </header>
+    <input type="text" id="searchInput" placeholder="Search for movies or TV shows...">
+    <div id="player-container"></div>
+    <div id="content"></div>
+<script>
+    const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM';
+    const apiBaseUrl = 'https://api.themoviedb.org/3';
+    const imageBaseUrl = 'https://image.tmdb.org/t/p/w200';
+    const embedBaseUrl = 'https://vidsrc.cc/v2/embed';
+    const searchInput = document.getElementById('searchInput');
+    const contentDiv = document.getElementById('content');
+    const playerContainer = document.getElementById('player-container');
+    const loaderHtml = '<div class="loader"></div>';
+    let searchTimeout;
+    const apiFetch = async (path) => { const response = await fetch(`${apiBaseUrl}/${path}`, {headers: { 'Authorization': `Bearer ${apiKey}`}}); return response.json(); };
+    const searchMedia = async () => {
+        const query = searchInput.value.trim(); 
+        if (!query) { contentDiv.innerHTML = ''; playerContainer.innerHTML = ''; return; }
+        contentDiv.className = ''; 
+        contentDiv.innerHTML = loaderHtml;
+        const data = await apiFetch(`search/multi?query=${encodeURIComponent(query)}`);
+        const validResults = data.results.filter( item => (item.media_type === 'movie' || item.media_type === 'tv') && item.poster_path );
+        const resultsHtml = validResults.map(item => {
+            const isMovie = item.media_type === 'movie';
+            const title = isMovie ? item.title : item.name;
+            const date = isMovie ? item.release_date : item.first_air_date;
+            const year = date ? ` (${new Date(date).getFullYear()})` : '';
+            const mediaTag = isMovie ? 'Movie' : 'TV Show';
+            return `
+                <div class="item" onclick="showDetails('${item.media_type}', ${item.id})">
+                    <img src="${imageBaseUrl}${item.poster_path}" alt="Poster for ${title}">
+                    <div>${title}</div>
+                    <div class="item-info">${mediaTag}${year}</div> 
+                </div>`; 
+        }).join(''); 
+        contentDiv.className = 'grid'; 
+        contentDiv.innerHTML = resultsHtml; }; 
+    const showDetails = async (type, id) => {
+        playerContainer.innerHTML = ''; 
+        contentDiv.innerHTML = loaderHtml; 
+        contentDiv.className = '';
+        const data = await apiFetch(`${type}/${id}`);
+        if (type === 'movie') { showPlayer('movie', id); contentDiv.innerHTML = `<h2>${data.title}</h2><p>${data.overview}</p>`; } 
+	else { const seasonsHtml = data.seasons
+                .filter(s => s.poster_path) 
+                .map(s => { const cleanSeasonName = s.name.replace(/'/g, "\\'");
+                    return `
+                        <div class="item" onclick="showEpisodes(${id}, ${s.season_number}, '${cleanSeasonName}')">
+                            <img src="${imageBaseUrl}${s.poster_path}" alt="Poster for ${s.name}">
+                            <div>${s.name}</div>
+                        </div>`;
                 }).join('');
-        };
-        const showDetails = async (type, id) => {
-            playerContainer.innerHTML = '';
-            contentDiv.className = '';
-            contentDiv.innerHTML = loaderHtml;
-            const data = await apiFetch(`${type}/${id}`);
-            let detailsHtml = `<h2>${data.title || data.name}</h2><p>${data.overview}</p>`;
-            if (type === 'movie') {
-                showPlayer('movie', id);
-            } else {
-                detailsHtml += `<div class="grid">${data.seasons.filter(s => s.poster_path).map(s => `<div class="item" onclick="showEpisodes(${id}, ${s.season_number}, '${s.name.replace(/'/g, "\\'")}')"><img src="https://image.tmdb.org/t/p/w200${s.poster_path}"><div>${s.name}</div></div>`).join('')}</div>`;
-            }
-            contentDiv.innerHTML = detailsHtml;
-        };
-        const showEpisodes = async (tvId, season, seasonName) => {
-            playerContainer.innerHTML = '';
-            contentDiv.className = '';
-            contentDiv.innerHTML = loaderHtml;
-            const data = await apiFetch(`tv/${tvId}/season/${season}`);
-            const episodesHtml = data.episodes.map(ep => `<div class="item" onclick="showPlayer('tv', ${tvId}, ${season}, ${ep.episode_number})"><img src="${ep.still_path ? `https://image.tmdb.org/t/p/w200${ep.still_path}` : 'https://via.placeholder.com/200x113.png?text=No+Image'}"><b>Ep ${ep.episode_number}: ${ep.name}</b><p style="font-size:0.8em;text-align:left;margin:5px 0 0 0;">${ep.overview}</p></div>`).join('');
-            contentDiv.innerHTML = `<button onclick="showDetails('tv', ${tvId})">← Back to Seasons</button><h2>${seasonName}</h2><div class="grid">${episodesHtml}</div>`;
-        };
-        const showPlayer = (type, id, season, episode) => {
-            const path = type === 'tv' ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
-            playerContainer.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-        searchInput.oninput = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMedia, 300); };
-    </script>
+            contentDiv.innerHTML = `<h2>${data.name}</h2><p>${data.overview}</p><div class="grid">${seasonsHtml}</div>`; } };
+    const showEpisodes = async (tvId, seasonNumber, seasonName) => { 
+        playerContainer.innerHTML = '';
+        contentDiv.innerHTML = loaderHtml; 
+        contentDiv.className = '';
+        const data = await apiFetch(`tv/${tvId}/season/${seasonNumber}`);
+        const episodesHtml = data.episodes.map(ep => { const stillUrl = ep.still_path ? `${imageBaseUrl}${ep.still_path}` : '';
+            return `
+                <div class="item" onclick="showPlayer('tv', ${tvId}, ${seasonNumber}, ${ep.episode_number})">
+                    <img src="${stillUrl}" alt="Still for ${ep.name}">
+                    <b>Ep ${ep.episode_number}: ${ep.name}</b>
+                    <p style="font-size:0.8em;text-align:left;margin:5px 0 0 0;">${ep.overview}</p>
+                </div>`;
+        }).join('');
+        contentDiv.innerHTML = `
+  	<button onclick="showDetails('tv', ${tvId})">← Back to Seasons</button>
+            <h2>${seasonName}</h2>
+            <div class="grid">${episodesHtml}</div>`; };
+    const showPlayer = (type, id, season, episode) => {
+        const path = (type === 'tv') ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
+        playerContainer.innerHTML = `<iframe src="${embedBaseUrl}/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
+        window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    searchInput.oninput = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMedia, 300); };
+</script>
 </body>
 </html>
