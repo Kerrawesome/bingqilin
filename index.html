@@ -28,7 +28,7 @@
     const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM';
     const apiBaseUrl = 'https://api.themoviedb.org/3';
     const imageBaseUrl = 'https://image.tmdb.org/t/p/w200';
-    const embedBaseUrl = 'https://vidsrc.cc/v2/embed';
+    const embedBaseUrl = 'https://cdn.moviesapi.club/embed';
     const searchInput = document.getElementById('searchInput');
     const contentDiv = document.getElementById('content');
     const playerContainer = document.getElementById('player-container');
@@ -92,7 +92,7 @@
             <div class="grid">${episodesHtml}</div>`; };
     const showPlayer = (type, id, season, episode) => {
         const path = (type === 'tv') ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
-        playerContainer.innerHTML = `<iframe src="${embedBaseUrl}/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
+        playerContainer.innerHTML = `<iframe src="${embedBaseUrl}/${path}" allowfullscreen></iframe>`;
         window.scrollTo({ top: 0, behavior: 'smooth' }); };
     searchInput.oninput = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMedia, 300); };
 </script>
