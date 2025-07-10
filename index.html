@@ -92,7 +92,7 @@
             <div class="grid">${episodesHtml}</div>`; };
     const showPlayer = (type, id, season, episode) => {
         const path = (type === 'tv') ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
-        playerContainer.innerHTML = `<iframe src="${embedBaseUrl}/${path}" allowfullscreen></iframe>`;
+        playerContainer.innerHTML = `<iframe src="${embedBaseUrl}/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
         window.scrollTo({ top: 0, behavior: 'smooth' }); };
     searchInput.oninput = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMedia, 300); };
 </script>
