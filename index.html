@@ -1,100 +1,285 @@
 <!DOCTYPE html>
+<html lang="en" class="bg-gray-100 text-gray-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bing Chilling Media</title>
+    <title>Bing Qilin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        header { display: flex; align-items: center; }
-        header img { height: 3em; margin-right: 1em; }
-        input { width: 100%; max-width: 800px; padding: 8px; margin: 15px 0; box-sizing: border-box; }
-        #player-container iframe { width: 100%; aspect-ratio: 16 / 9; border: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .item { border: 1px solid #ccc; cursor: pointer; text-align: center; padding: 5px; background-color: #fff; transition: transform 0.2s; overflow: hidden; }
-        .item:hover { transform: scale(1.03); box-shadow: 0 4px 8px rgba(0,0,0,0.1);  }
-        .item img { max-width: 100%; height: auto; display: block;  }
-        .item div, .item b { padding: 5px;  }
-        .item-info { font-size: 0.9em; color: #555;  }
-        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #333; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 50px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @media (max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+        /* Styles for the modal player overlay */
+        #player-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            /* Smooth transition for the overlay */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #player-wrapper.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Responsive container that maintains a 16:9 aspect ratio */
+        #player-container {
+            position: relative;
+            width: 95vw;
+            height: 53.4375vw; /* 16:9 aspect ratio (9/16 * 95) */
+            max-width: 177.77vh; /* Prevents container from being wider than screen in portrait mode */
+            max-height: 95vh;  /* Prevents container from being taller than screen in landscape mode */
+            background-color: black;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        #player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
-<body>
-    <header> <img src="https://em-content.zobj.net/source/google/387/soft-ice-cream_1f366.png" alt="Logo"> <h1>Bing Chilling Media</h1> </header>
-    <input type="text" id="searchInput" placeholder="Search for movies or TV shows...">
-    <div id="player-container"></div>
-    <div id="content"></div>
-<script>
-    const apiKey = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM';
-    const apiBaseUrl = 'https://api.themoviedb.org/3';
-    const imageBaseUrl = 'https://image.tmdb.org/t/p/w200';
-    const embedBaseUrl = 'https://vidsrc.cc/v2/embed';
-    const searchInput = document.getElementById('searchInput');
-    const contentDiv = document.getElementById('content');
-    const playerContainer = document.getElementById('player-container');
-    const loaderHtml = '<div class="loader"></div>';
-    let searchTimeout;
-    const apiFetch = async (path) => { const response = await fetch(`${apiBaseUrl}/${path}`, {headers: { 'Authorization': `Bearer ${apiKey}`}}); return response.json(); };
-    const searchMedia = async () => {
-        const query = searchInput.value.trim(); 
-        if (!query) { contentDiv.innerHTML = ''; playerContainer.innerHTML = ''; return; }
-        contentDiv.className = ''; 
-        contentDiv.innerHTML = loaderHtml;
-        const data = await apiFetch(`search/multi?query=${encodeURIComponent(query)}`);
-        const validResults = data.results.filter( item => (item.media_type === 'movie' || item.media_type === 'tv') && item.poster_path );
-        const resultsHtml = validResults.map(item => {
-            const isMovie = item.media_type === 'movie';
-            const title = isMovie ? item.title : item.name;
-            const date = isMovie ? item.release_date : item.first_air_date;
-            const year = date ? ` (${new Date(date).getFullYear()})` : '';
-            const mediaTag = isMovie ? 'Movie' : 'TV Show';
-            return `
-                <div class="item" onclick="showDetails('${item.media_type}', ${item.id})">
-                    <img src="${imageBaseUrl}${item.poster_path}" alt="Poster for ${title}">
-                    <div>${title}</div>
-                    <div class="item-info">${mediaTag}${year}</div> 
-                </div>`; 
-        }).join(''); 
-        contentDiv.className = 'grid'; 
-        contentDiv.innerHTML = resultsHtml; }; 
-    const showDetails = async (type, id) => {
-        playerContainer.innerHTML = ''; 
-        contentDiv.innerHTML = loaderHtml; 
-        contentDiv.className = '';
-        const data = await apiFetch(`${type}/${id}`);
-        if (type === 'movie') { showPlayer('movie', id); contentDiv.innerHTML = `<h2>${data.title}</h2><p>${data.overview}</p>`; } 
-	else { const seasonsHtml = data.seasons
-                .filter(s => s.poster_path) 
-                .map(s => { const cleanSeasonName = s.name.replace(/'/g, "\\'");
-                    return `
-                        <div class="item" onclick="showEpisodes(${id}, ${s.season_number}, '${cleanSeasonName}')">
-                            <img src="${imageBaseUrl}${s.poster_path}" alt="Poster for ${s.name}">
-                            <div>${s.name}</div>
-                        </div>`;
-                }).join('');
-            contentDiv.innerHTML = `<h2>${data.name}</h2><p>${data.overview}</p><div class="grid">${seasonsHtml}</div>`; } };
-    const showEpisodes = async (tvId, seasonNumber, seasonName) => { 
-        playerContainer.innerHTML = '';
-        contentDiv.innerHTML = loaderHtml; 
-        contentDiv.className = '';
-        const data = await apiFetch(`tv/${tvId}/season/${seasonNumber}`);
-        const episodesHtml = data.episodes.map(ep => { const stillUrl = ep.still_path ? `${imageBaseUrl}${ep.still_path}` : '';
-            return `
-                <div class="item" onclick="showPlayer('tv', ${tvId}, ${seasonNumber}, ${ep.episode_number})">
-                    <img src="${stillUrl}" alt="Still for ${ep.name}">
-                    <b>Ep ${ep.episode_number}: ${ep.name}</b>
-                    <p style="font-size:0.8em;text-align:left;margin:5px 0 0 0;">${ep.overview}</p>
-                </div>`;
-        }).join('');
-        contentDiv.innerHTML = `
-  	<button onclick="showDetails('tv', ${tvId})">← Back to Seasons</button>
-            <h2>${seasonName}</h2>
-            <div class="grid">${episodesHtml}</div>`; };
-    const showPlayer = (type, id, season, episode) => {
-        const path = (type === 'tv') ? `${type}/${id}/${season}/${episode}` : `${type}/${id}`;
-        playerContainer.innerHTML = `<iframe src="${embedBaseUrl}/${path}" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>`;
-        window.scrollTo({ top: 0, behavior: 'smooth' }); };
-    searchInput.oninput = () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMedia, 300); };
-</script>
+<body class="container mx-auto p-4">
+
+    <!-- Header and Search -->
+    <header class="mb-8">
+        <h1 class="text-4xl font-bold text-center mb-4 text-gray-800">Bing Qilin</h1>
+        <div class="max-w-md mx-auto">
+            <div class="relative">
+                 <input type="text" id="searchInput" placeholder="Start typing to search..." class="bg-white border border-gray-300 text-gray-900 w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+    </header>
+
+    <main id="mainContent">
+        <!-- Back Button Navigation -->
+        <div id="navigation-bar" class="hidden mb-4 space-x-2">
+            <button id="backToSearchBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">
+                &larr; Back to Search
+            </button>
+            <button id="backToSeasonsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">
+                &larr; Back to Seasons
+            </button>
+        </div>
+
+        <!-- Results Grid -->
+        <div id="resultsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <!-- Content will be injected here -->
+        </div>
+    </main>
+
+    <!-- Player Wrapper -->
+    <div id="player-wrapper">
+        <div id="player-container">
+            <iframe id="player" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+        </div>
+    </div>
+
+
+    <script>
+        const apiKey = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
+        const searchInput = document.getElementById('searchInput');
+        const playerWrapper = document.getElementById('player-wrapper');
+        const player = document.getElementById('player');
+        const resultsGrid = document.getElementById('resultsGrid');
+        
+        // Navigation Buttons
+        const navigationBar = document.getElementById('navigation-bar');
+        const backToSearchBtn = document.getElementById('backToSearchBtn');
+        const backToSeasonsBtn = document.getElementById('backToSeasonsBtn');
+
+        let lastSearchResults = [];
+        let currentTvShow = null; // Store the TV show being browsed
+        let debounceTimeout;
+
+        const apiOptions = {
+            method: 'GET',
+            headers: {
+                accept: 'application/json',
+                Authorization: `Bearer ${apiKey}`
+            }
+        };
+
+        // --- Event Listeners ---
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const query = searchInput.value.trim();
+                performSearch(query);
+            }, 500);
+        });
+
+        async function performSearch(query) {
+            if (query) {
+                const results = await searchTMDb(query);
+                lastSearchResults = results;
+                displaySearchResults(results);
+            } else {
+                lastSearchResults = [];
+                displaySearchResults([]);
+            }
+            hidePlayer();
+            updateNavigation();
+        }
+
+        playerWrapper.addEventListener('click', (e) => {
+            if (e.target === playerWrapper) hidePlayer();
+        });
+
+        backToSearchBtn.addEventListener('click', () => {
+            displaySearchResults(lastSearchResults);
+            updateNavigation();
+        });
+
+        backToSeasonsBtn.addEventListener('click', () => {
+            if (currentTvShow) {
+                displaySeasons(currentTvShow);
+                updateNavigation('seasons', currentTvShow);
+            }
+        });
+
+
+        // --- API Fetching ---
+        async function searchTMDb(query) {
+            const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`;
+            const response = await fetch(url, apiOptions);
+            const data = await response.json();
+            return data.results;
+        }
+
+        async function getTvShowDetails(tvId) {
+            const url = `https://api.themoviedb.org/3/tv/${tvId}?language=en-US`;
+            const response = await fetch(url, apiOptions);
+            return await response.json();
+        }
+
+        async function getTvSeasonDetails(tvId, seasonNumber) {
+            const url = `https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNumber}?language=en-US`;
+            const response = await fetch(url, apiOptions);
+            return await response.json();
+        }
+
+        // --- Display Functions ---
+        function displaySearchResults(results) {
+            currentTvShow = null; // Clear TV show context
+            resultsGrid.innerHTML = '';
+            results.filter(item => item.poster_path && ['movie', 'tv'].includes(item.media_type)).forEach(item => {
+                const year = item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || '';
+                const title = `${item.title || item.name} ${year ? `(${year})` : ''}`;
+                const card = createCard(item.poster_path, title);
+                card.addEventListener('click', () => handleItemClick(item));
+                resultsGrid.appendChild(card);
+            });
+        }
+
+        async function displaySeasons(tvShow) {
+            updateNavigation('seasons', tvShow);
+            resultsGrid.innerHTML = '';
+            tvShow.seasons.forEach(season => {
+                if (season.season_number > 0 && season.poster_path) {
+                    const year = season.air_date ? `(${season.air_date.substring(0, 4)})` : '';
+                    const title = `${season.name} ${year}`;
+                    const card = createCard(season.poster_path, title);
+                    card.addEventListener('click', async () => {
+                        const seasonDetails = await getTvSeasonDetails(tvShow.id, season.season_number);
+                        displayEpisodes(seasonDetails, tvShow);
+                    });
+                    resultsGrid.appendChild(card);
+                }
+            });
+        }
+
+        function displayEpisodes(seasonDetails, tvShow) {
+            updateNavigation('episodes', tvShow);
+            resultsGrid.innerHTML = '';
+            seasonDetails.episodes.forEach(episode => {
+                const episodeCard = document.createElement('div');
+                episodeCard.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-300 shadow-md hover:shadow-xl';
+                const airDate = episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No date';
+                episodeCard.innerHTML = `
+                    <img src="${episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : 'https://via.placeholder.com/500x281?text=No+Image'}" alt="${episode.name}" class="w-full h-auto object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/500x281?text=No+Image';">
+                    <div class="p-3">
+                        <h3 class="font-bold text-sm">E${episode.episode_number}: ${episode.name}</h3>
+                        <p class="text-xs text-gray-500 mb-2">${airDate}</p>
+                        <p class="text-xs text-gray-600">${episode.overview}</p>
+                    </div>
+                `;
+                episodeCard.addEventListener('click', () => playEpisode(tvShow.id, seasonDetails.season_number, episode.episode_number));
+                resultsGrid.appendChild(episodeCard);
+            });
+        }
+
+        // --- UI Logic ---
+        function createCard(posterPath, title) {
+            const card = document.createElement('div');
+            card.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-300 shadow-md hover:shadow-xl';
+            card.innerHTML = `
+                <img src="https://image.tmdb.org/t/p/w500${posterPath}" alt="${title}" class="w-full h-auto">
+                <div class="p-3">
+                    <h3 class="font-bold text-sm">${title}</h3>
+                </div>
+            `;
+            return card;
+        }
+
+        async function handleItemClick(item) {
+            hidePlayer();
+            if (item.media_type === 'movie') {
+                playMovie(item.id);
+            } else if (item.media_type === 'tv') {
+                const tvDetails = await getTvShowDetails(item.id);
+                displaySeasons(tvDetails);
+            }
+        }
+        
+        function updateNavigation(view = 'search', tvShow = null) {
+            currentTvShow = tvShow; // Update context
+            
+            if (view === 'search') {
+                navigationBar.classList.add('hidden');
+            } else {
+                navigationBar.classList.remove('hidden');
+                backToSearchBtn.classList.remove('hidden');
+                
+                if (view === 'seasons') {
+                    backToSeasonsBtn.classList.add('hidden');
+                } else if (view === 'episodes') {
+                    backToSeasonsBtn.classList.remove('hidden');
+                }
+            }
+        }
+
+
+        // --- Player ---
+        function showPlayer() {
+            playerWrapper.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hidePlayer() {
+            playerWrapper.classList.remove('visible');
+            player.src = ''; // Stop the video
+            document.body.style.overflow = '';
+        }
+
+        function playMovie(tmdbId) {
+            player.src = `https://vidfast.pro/movie/${tmdbId}`;
+            showPlayer();
+        }
+
+        function playEpisode(tmdbId, seasonNumber, episodeNumber) {
+            player.src = `https://vidfast.pro/tv/${tmdbId}/${seasonNumber}/${episodeNumber}`;
+            showPlayer();
+        }
+    </script>
+
 </body>
 </html>
