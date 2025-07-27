@@ -79,7 +79,7 @@
     <!-- Player Wrapper -->
     <div id="player-wrapper">
         <div id="player-container">
-            <iframe id="player" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+            <iframe id="player" frameborder="0" allow="autoplay; fullscreen" sandbox="allow-same-origin allow-scripts" allowfullscreen></iframe>
         </div>
     </div>
 
@@ -271,12 +271,12 @@
         }
 
         function playMovie(tmdbId) {
-            player.src = `https://vidfast.pro/movie/${tmdbId}`;
+            player.src = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
             showPlayer();
         }
 
         function playEpisode(tmdbId, seasonNumber, episodeNumber) {
-            player.src = `https://vidfast.pro/tv/${tmdbId}/${seasonNumber}/${episodeNumber}`;
+            player.src = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${seasonNumber}/${episodeNumber}`;
             showPlayer();
         }
     </script>
