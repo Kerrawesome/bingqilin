@@ -1,6 +1,6 @@
 {
-    "name": "Bing Chilling Media",
-    "short_name": "Bing Chilling",
+    "name": "冰淇淋",
+    "short_name": "冰淇淋",
     "start_url": "index.html",
     "display": "standalone",
     "icons": [
@@ -11,3 +11,4 @@
         }
     ]
 }
+
