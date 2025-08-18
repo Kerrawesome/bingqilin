@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .settings-btn {
-            position: fixed; top: 1rem; right: 1rem; font-size: 2rem;
+            position: absolute; top: 1rem; right: 1rem; font-size: 2rem;
             cursor: pointer; z-index: 60;
         }
         .modal {
@@ -174,7 +174,7 @@
 
             const pirateButton = item.media_type === 'movie'
                 ? `<button class="absolute top-2 right-2 text-2xl bg-white bg-opacity-100 rounded-full p-1 leading-none" title="Search release"
-                        onclick="event.stopPropagation(); window.open('https://predb.me/?search=${encodeURIComponent(plainTitle + ' ' + year)}&cats=movies&rss=1', '_blank');">
+                        onclick="event.stopPropagation(); window.open('https://predb.me/?search=${encodeURIComponent(plainTitle + ' ' + year)}&cats=movies', '_blank');">
                         🏴‍☠️
                    </button>`
                 : '';
@@ -412,4 +412,5 @@
     </script>
 </body>
 </html>
+
 
