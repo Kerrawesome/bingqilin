@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冰淇淋</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .settings-btn {
+            position: absolute; top: 1rem; right: 1rem; font-size: 2rem;
+            cursor: pointer; z-index: 60;
+        }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.visible { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        #player-wrapper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 50; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #player-wrapper.visible { opacity: 1; visibility: visible; }
+        #player-container {
+            position: relative; width: 95vw; height: 53.4375vw; /* 16:9 aspect ratio */
+            max-width: 177.77vh; max-height: 95vh; background-color: black;
+        }
+        #player-container iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+    </style>
+</head>
+<body class="container mx-auto p-4">
+
+    <!-- Settings Button -->
+    <div id="settingsBtn" class="settings-btn" title="Settings">⚙️</div>
+
+    <!-- Header -->
+    <header class="mb-8 relative">
+        <h1 class="text-4xl font-bold text-center mb-4 text-gray-800">冰淇淋</h1>
+        <div class="max-w-md mx-auto">
+            <input type="text" id="searchInput" placeholder="Start typing to search..." class="bg-white border border-gray-300 text-gray-900 w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+    </header>
+
+    <main id="mainContent">
+        <!-- Navigation Bar -->
+        <div id="navigation-bar" class="hidden mb-4 space-x-2">
+            <button id="backToSearchBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">&larr; Back to Search</button>
+            <button id="backToSeasonsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg">&larr; Back to Seasons</button>
+        </div>
+        
+        <!-- Last Watched Section -->
+        <section id="lastWatchedSection" class="mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-700">Last Watched</h2>
+            <div id="lastWatchedGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+        </section>
+
+        <!-- Results Grid -->
+        <div id="resultsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+    </main>
+
+    <!-- Player Modal -->
+    <div id="player-wrapper">
+        <div id="player-container">
+            <iframe id="player" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Settings</h2>
+            <p class="text-sm text-gray-600 mb-4">Use placeholders: <code>{tmdb}</code>, <code>{season}</code>, <code>{episode}</code>.</p>
+            <div class="mb-4">
+                <label for="movieApiInput" class="block font-bold mb-2">Movie API URL:</label>
+                <input type="text" id="movieApiInput" class="shadow border rounded w-full py-2 px-3 focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-6">
+                <label for="tvApiInput" class="block font-bold mb-2">TV Show API URL:</label>
+                <input type="text" id="tvApiInput" class="shadow border rounded w-full py-2 px-3 focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="saveSettingsBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
+                <div>
+                    <button id="resetSettingsBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mr-2">Reset</button>
+                    <button id="closeSettingsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION & STATE ---
+        const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
+        const DEFAULT_MOVIE_API = 'https://vidsrc.cc/v2/embed/movie/{tmdb}';
+        const DEFAULT_TV_API = 'https://vidsrc.cc/v2/embed/tv/{tmdb}/{season}/{episode}';
+
+        let customMovieApi = localStorage.getItem('customMovieApi') || DEFAULT_MOVIE_API;
+        let customTvApi = localStorage.getItem('customTvApi') || DEFAULT_TV_API;
+        let lastSearchResults = [];
+        let currentTvShow = null;
+        let debounceTimeout;
+
+        // --- DOM ELEMENTS ---
+        const searchInput = document.getElementById('searchInput');
+        const playerWrapper = document.getElementById('player-wrapper');
+        const player = document.getElementById('player');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const lastWatchedGrid = document.getElementById('lastWatchedGrid');
+        const lastWatchedSection = document.getElementById('lastWatchedSection');
+        const navigationBar = document.getElementById('navigation-bar');
+        const backToSearchBtn = document.getElementById('backToSearchBtn');
+        const backToSeasonsBtn = document.getElementById('backToSeasonsBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+        const movieApiInput = document.getElementById('movieApiInput');
+        const tvApiInput = document.getElementById('tvApiInput');
+
+        const TMDB_OPTIONS = {
+            method: 'GET',
+            headers: {
+                accept: 'application/json',
+                Authorization: `Bearer ${TMDB_API_KEY}`
+            }
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        /** Fetches data from a URL and returns JSON. */
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url, TMDB_OPTIONS);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                return null;
+            }
+        }
+        
+        /** Clears a container and displays an array of media items. */
+        function displayItems(items, container) {
+            container.innerHTML = '';
+            const validItems = items.filter(item => item && item.poster_path);
+            for (const item of validItems) {
+                const card = createCard(item);
+                container.appendChild(card);
+            }
+        }
+
+        /** Creates a DOM element for a movie, TV show, or season card. */
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = 'bg-white border rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-300 shadow-md';
+
+            const plainTitle = item.title || item.name || 'Untitled';
+            const year = (item.release_date || item.first_air_date || item.air_date || '').substring(0, 4);
+            const titleWithYear = `${plainTitle} ${year ? `(${year})` : ''}`;
+            const displayTitle = item.displayTitle || titleWithYear;
+
+            const pirateButton = item.media_type === 'movie'
+                ? `<button class="absolute top-2 right-2 text-2xl bg-white bg-opacity-100 rounded-full p-1 leading-none" title="Search release"
+                        onclick="event.stopPropagation(); window.open('https://predb.me/?search=${encodeURIComponent(plainTitle + ' ' + year)}&cats=movies', '_blank');">
+                        🏴‍☠️
+                   </button>`
+                : '';
+            
+            card.innerHTML = `
+                <div class="relative">
+                    <img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="${plainTitle}" class="w-full h-auto object-cover" onerror="this.src='https://via.placeholder.com/500x750?text=No+Image';">
+                    ${pirateButton}
+                </div>
+                <div class="p-3">
+                    <h3 class="font-bold text-sm leading-tight">${displayTitle}</h3>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => handleItemClick(item));
+            return card;
+        }
+
+        /** Handles clicking on any media card to navigate or play. */
+        async function handleItemClick(item) {
+            hidePlayer();
+
+            // --- FIX: Special logic for "Last Watched" TV episodes ---
+            // If the item has resume_season, it's a last watched item. Play it directly.
+            if (item.media_type === 'tv' && item.resume_season && item.resume_episode) {
+                const showDetails = await fetchData(`https://api.themoviedb.org/3/tv/${item.id}?language=en-US`);
+                const seasonDetails = await fetchData(`https://api.themoviedb.org/3/tv/${item.id}/season/${item.resume_season}?language=en-US`);
+                const episodeDetails = seasonDetails?.episodes.find(e => e.episode_number === item.resume_episode);
+                
+                if (showDetails && seasonDetails && episodeDetails) {
+                    playEpisode(showDetails, seasonDetails, episodeDetails);
+                } else {
+                    alert("Could not find the details for this episode to resume playing.");
+                }
+                return; // Stop further execution
+            }
+
+            // Regular click logic for all other items
+            if (item.media_type === 'tv_season') {
+                const seasonDetails = await fetchData(`https://api.themoviedb.org/3/tv/${currentTvShow.id}/season/${item.season_number}?language=en-US`);
+                if (seasonDetails) displayEpisodes(seasonDetails, currentTvShow);
+                return;
+            }
+
+            const details = await fetchData(`https://api.themoviedb.org/3/${item.media_type}/${item.id}?language=en-US`);
+            if (!details) return;
+
+            details.media_type = item.media_type; // Re-apply because the details endpoint doesn't include it.
+
+            if (details.media_type === 'movie') {
+                playMovie(details);
+            } else if (details.media_type === 'tv') {
+                currentTvShow = details;
+                displaySeasons(details);
+            }
+        }
+        
+        // --- DISPLAY LOGIC ---
+
+        /** Searches TMDB and displays the results. */
+        async function performSearch(query) {
+            resultsGrid.innerHTML = '';
+            lastWatchedSection.style.display = 'none';
+            updateNavigation('search');
+
+            if (!query) {
+                lastWatchedSection.style.display = 'block';
+                lastSearchResults = [];
+                return;
+            }
+
+            const data = await fetchData(`https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&include_adult=false&language=en-US`);
+            lastSearchResults = data ? data.results : [];
+            displayItems(lastSearchResults, resultsGrid);
+        }
+        
+        /** Displays the seasons for a given TV show. */
+        function displaySeasons(tvShow) {
+            currentTvShow = tvShow;
+            const seasonsAsItems = tvShow.seasons
+                .filter(s => s.season_number > 0)
+                .map(s => ({ ...s, media_type: 'tv_season' }));
+            displayItems(seasonsAsItems, resultsGrid);
+            updateNavigation('seasons');
+        }
+
+        /** Displays episodes for a given season. */
+        function displayEpisodes(seasonDetails, tvShow) {
+            updateNavigation('episodes');
+            resultsGrid.innerHTML = '';
+            seasonDetails.episodes.forEach(episode => {
+                const epCard = document.createElement('div');
+                epCard.className = 'bg-white border rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-transform shadow-md';
+                const overview = episode.overview ? episode.overview.substring(0, 100) + '...' : 'No overview.';
+                
+                epCard.innerHTML = `
+                    <img src="${episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : 'https://via.placeholder.com/500x281?text=No+Image'}" class="w-full h-auto object-cover">
+                    <div class="p-3">
+                        <h3 class="font-bold text-sm">E${episode.episode_number}: ${episode.name}</h3>
+                        <p class="text-xs text-gray-500 mt-1">${overview}</p>
+                    </div>
+                `;
+                epCard.addEventListener('click', () => playEpisode(tvShow, seasonDetails, episode));
+                resultsGrid.appendChild(epCard);
+            });
+        }
+        
+        /** Loads and displays last watched items from localStorage. */
+        async function loadLastWatched() {
+            lastWatchedGrid.innerHTML = '';
+            const itemsToDisplay = [];
+            const movieItem = JSON.parse(localStorage.getItem('lastWatchedMovie'));
+            const tvItem = JSON.parse(localStorage.getItem('lastWatchedTV'));
+
+            if (movieItem) {
+                const details = await fetchData(`https://api.themoviedb.org/3/movie/${movieItem.id}?language=en-US`);
+                if (details) {
+                    details.media_type = 'movie';
+                    itemsToDisplay.push(details);
+                }
+            }
+            if (tvItem) {
+                const showDetails = await fetchData(`https://api.themoviedb.org/3/tv/${tvItem.tvId}?language=en-US`);
+                const epDetails = await fetchData(`https://api.themoviedb.org/3/tv/${tvItem.tvId}/season/${tvItem.season}/episode/${tvItem.episode}?language=en-US`);
+                if (showDetails && epDetails) {
+                    showDetails.media_type = 'tv';
+                    showDetails.displayTitle = `${showDetails.name}<br><span class="text-xs font-normal">S${tvItem.season} E${tvItem.episode}: ${epDetails.name}</span>`;
+                    // --- FIX: Add the specific season/episode info for the click handler ---
+                    showDetails.resume_season = tvItem.season;
+                    showDetails.resume_episode = tvItem.episode;
+                    itemsToDisplay.push(showDetails);
+                }
+            }
+            displayItems(itemsToDisplay, lastWatchedGrid);
+        }
+
+        // --- PLAYER & NAVIGATION ---
+
+        function playMovie(movie) {
+            localStorage.setItem('lastWatchedMovie', JSON.stringify({ id: movie.id }));
+            
+            // MODIFICATION START
+            if (customMovieApi === DEFAULT_MOVIE_API) {
+                player.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            } else {
+                player.removeAttribute('sandbox');
+            }
+            // MODIFICATION END
+
+            player.src = customMovieApi.replace('{tmdb}', movie.id);
+            showPlayer();
+        }
+
+        function playEpisode(tvShow, season, episode) {
+            localStorage.setItem('lastWatchedTV', JSON.stringify({ tvId: tvShow.id, season: season.season_number, episode: episode.episode_number }));
+            
+            // MODIFICATION START
+            if (customTvApi === DEFAULT_TV_API) {
+                player.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            } else {
+                player.removeAttribute('sandbox');
+            }
+            // MODIFICATION END
+            
+            player.src = customTvApi.replace('{tmdb}', tvShow.id)
+                .replace('{season}', season.season_number)
+                .replace('{episode}', episode.episode_number);
+            showPlayer();
+        }
+
+        function showPlayer() {
+            playerWrapper.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hidePlayer() {
+            playerWrapper.classList.remove('visible');
+            player.src = '';
+            document.body.style.overflow = '';
+        }
+        
+        function updateNavigation(view) {
+            navigationBar.classList.toggle('hidden', view === 'search' || !view);
+            if (!navigationBar.classList.contains('hidden')) {
+                backToSearchBtn.classList.toggle('hidden', view === 'seasons');
+                backToSeasonsBtn.classList.toggle('hidden', view !== 'episodes');
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            movieApiInput.value = customMovieApi;
+            tvApiInput.value = customTvApi;
+            loadLastWatched();
+
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => performSearch(searchInput.value.trim()), 500);
+            });
+
+            playerWrapper.addEventListener('click', (e) => {
+                if (e.target === playerWrapper) hidePlayer();
+            });
+
+            backToSearchBtn.addEventListener('click', () => {
+                displayItems(lastSearchResults, resultsGrid);
+                updateNavigation('search');
+            });
+            backToSeasonsBtn.addEventListener('click', () => {
+                if (currentTvShow) displaySeasons(currentTvShow);
+            });
+
+            settingsBtn.addEventListener('click', () => settingsModal.classList.add('visible'));
+            closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('visible'));
+            resetSettingsBtn.addEventListener('click', () => {
+                movieApiInput.value = DEFAULT_MOVIE_API;
+                tvApiInput.value = DEFAULT_TV_API;
+                alert('Defaults restored. Click Save to apply.');
+            });
+            saveSettingsBtn.addEventListener('click', () => {
+                let movieUrl = movieApiInput.value.trim();
+                let tvUrl = tvApiInput.value.trim();
+                if (movieUrl && !movieUrl.startsWith('http')) movieUrl = 'https://' + movieUrl;
+                if (tvUrl && !tvUrl.startsWith('http')) tvUrl = 'https://' + tvUrl;
+                
+                customMovieApi = movieUrl;
+                customTvApi = tvUrl;
+                localStorage.setItem('customMovieApi', customMovieApi);
+                localStorage.setItem('customTvApi', customTvApi);
+                
+                alert('Settings saved!');
+                settingsModal.classList.remove('visible');
+            });
+        });
+    </script>
+</body>
+</html>
+
+
