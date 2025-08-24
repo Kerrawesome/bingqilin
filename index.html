@@ -129,13 +129,7 @@
                 <p class="mb-3 font-medium">Presets:</p>
                 <div id="preset-buttons-container" class="flex flex-wrap gap-2"></div>
             </div>
-            <div class="mb-6">
-                <label class="flex items-center">
-                    <input type="checkbox" id="enable-sandbox" class="form-checkbox h-5 w-5 text-[var(--md-sys-color-primary)] rounded focus:ring-[var(--md-sys-color-primary)] border-[var(--md-sys-color-outline)]">
-                    <span class="ml-3">Enable Sandbox (allow-scripts, allow-same-origin)</span>
-                </label>
-            </div>
-            <div class="flex justify-end space-x-2">
+            <div class="flex justify-end space-x-2 mt-6">
                 <button id="close-settings" class="px-6 py-2 rounded-full hover:bg-[var(--md-sys-color-secondary-container)] transition-colors text-[var(--md-sys-color-on-secondary-container)] font-medium">Close</button>
                 <button id="save-settings" class="bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold py-2 px-6 rounded-full hover:opacity-90 transition-opacity">Save</button>
             </div>
@@ -170,7 +164,6 @@
         const saveSettings = document.getElementById('save-settings');
         const customApiUrlInput = document.getElementById('custom-api-url');
         const presetButtonsContainer = document.getElementById('preset-buttons-container');
-        const enableSandbox = document.getElementById('enable-sandbox');
         const navigationControls = document.getElementById('navigation-controls');
 
         // App State
@@ -180,7 +173,6 @@
         // Settings
         let customApiUrl = localStorage.getItem('customApiUrl') || API_PRESETS[0]?.url || 'https://vidfast.pro/{type}/{id}';
         customApiUrlInput.value = customApiUrl;
-        enableSandbox.checked = JSON.parse(localStorage.getItem('enableSandbox')) || false;
         
         const tmdbOptions = {
             method: 'GET',
@@ -325,7 +317,7 @@
                 }
             }
             videoIframe.src = url;
-            videoIframe.sandbox.value = enableSandbox.checked ? "allow-scripts allow-same-origin" : "";
+            // No sandbox attribute is set here.
             iframeModal.classList.remove('hidden');
             iframeModal.classList.add('flex');
         }
@@ -450,7 +442,6 @@
         saveSettings.addEventListener('click', () => {
             customApiUrl = customApiUrlInput.value;
             localStorage.setItem('customApiUrl', customApiUrl);
-            localStorage.setItem('enableSandbox', enableSandbox.checked);
             settingsModal.style.display = 'none';
         });
 
@@ -462,5 +453,3 @@
     </script>
 </body>
 </html>
-
-
