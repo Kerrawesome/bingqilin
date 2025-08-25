@@ -306,8 +306,7 @@
                      url += `/${season}/${episode}`;
                 }
             }
-           const proxyUrl = `/--proxy--/?url=${encodeURIComponent(url)}`;
-			videoIframe.src = proxyUrl;
+			videoIframe.src = url;
             iframeModal.classList.remove('hidden');
             iframeModal.classList.add('flex');
         }
