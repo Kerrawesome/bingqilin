@@ -8,10 +8,5 @@
     "name": "111movies.com",
     "movie_url": "https://111movies.com/movie/{id}",
     "tv_url": "https://111movies.com/tv/{id}/{season}/{episode}"
-  },
-{
-    "name": "111movies.com",
-    "movie_url": "https://111movies.com/movie/{id}",
-    "tv_url": "https://111movies.com/tv/{id}/{season}/{episode}"
   }
 ]
