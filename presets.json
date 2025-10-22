@@ -1,12 +1,17 @@
 [
-    { 
-        "name": "vidrock.net", 
-        "movie_url": "https://vidrock.net/movie/{id}",
-        "tv_url": "https://vidrock.net/tv/{id}/{season}/{episode}" 
-    },
-    { 
-        "name": "111movies.com", 
-        "movie_url": "https://111movies.com/movie/{id}",
-        "tv_url": "https://111movies.com/tv/{id}/{season}/{episode}" 
-    }
+  {
+    "name": "vidrock.net",
+    "movie_url": "https://vidrock.net/movie/{id}",
+    "tv_url": "https://vidrock.net/tv/{id}/{season}/{episode}"
+  },
+  {
+    "name": "111movies.com",
+    "movie_url": "https://111movies.com/movie/{id}",
+    "tv_url": "https://111movies.com/tv/{id}/{season}/{episode}"
+  },
+  {
+    "name": "111movies.com",
+    "movie_url": "https://111movies.com/movie/{id}",
+    "tv_url": "https://111movies.com/tv/{id}/{season}/{episode}"
+  }
 ]
