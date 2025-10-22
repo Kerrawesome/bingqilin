@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON Preset Editor</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        textarea { width: 100%; height: 400px; }
+        button { font-size: 1.2em; padding: 10px 15px; margin-top: 10px; }
+        #status { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Edit presets.json</h1>
+    <textarea id="jsonEditor" placeholder="Loading..."></textarea>
+    <br>
+    <button id="saveButton">Save Changes</button>
+    <div id="status"></div>
+
+    <script>
+        // *** IMPORTANT: Replace this with your actual Cloudflare Worker URL ***
+        const WORKER_URL = 'https://bingqilin.kerrawesome.workers.dev/';
+
+        const editor = document.getElementById('jsonEditor');
+        const saveButton = document.getElementById('saveButton');
+        const statusDiv = document.getElementById('status');
+
+        // Function to load the current JSON content from the worker
+        async function loadPresets() {
+            statusDiv.textContent = 'Loading...';
+            try {
+                const response = await fetch(WORKER_URL, { method: 'GET' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                // Pretty-print the JSON in the textarea
+                editor.value = JSON.stringify(data, null, 2);
+                statusDiv.textContent = 'Loaded successfully.';
+            } catch (error) {
+                console.error('Error loading presets:', error);
+                statusDiv.textContent = `Error loading presets: ${error.message}`;
+            }
+        }
+
+        // Function to save the new JSON content via the worker
+        async function savePresets() {
+            statusDiv.textContent = 'Saving...';
+            saveButton.disabled = true;
+
+            try {
+                // First, validate that the content is valid JSON before sending
+                JSON.parse(editor.value);
+
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: editor.value
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Failed to save.');
+                }
+
+                statusDiv.textContent = 'Saved successfully!';
+
+            } catch (error) {
+                console.error('Error saving presets:', error);
+                // Handle JSON parsing error specifically
+                if (error instanceof SyntaxError) {
+                    statusDiv.textContent = 'Error: Invalid JSON format. Please correct it and try again.';
+                } else {
+                    statusDiv.textContent = `Error saving presets: ${error.message}`;
+                }
+            } finally {
+                saveButton.disabled = false;
+            }
+        }
+
+        // Add event listener to the save button
+        saveButton.addEventListener('click', savePresets);
+
+        // Load the presets when the page loads
+        document.addEventListener('DOMContentLoaded', loadPresets);
+    </script>
+</body>
+</html>
