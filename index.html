@@ -380,7 +380,7 @@
         
         async function loadPresets() {
             try {
-                const response = await fetch('presets.json');
+                const response = await fetch(`presets.json?v=${Date.now()}`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 API_PRESETS = await response.json();
                 
