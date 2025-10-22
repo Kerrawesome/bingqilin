@@ -1,7 +1,8 @@
 {
     "name": "Bing Qilin",
     "short_name": "冰淇淋",
-    "start_url": "index.html",
+    "start_url": "/index.html",
+    "scope": "/",
     "display": "standalone",
     "icons": [
         {
@@ -11,5 +12,6 @@
         }
     ]
 }
+
 
 
