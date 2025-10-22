@@ -9,7 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="manifest" href=/manifest.json">
+    <link rel="icon" type="image/x-icon" href="https://em-content.zobj.net/source/google/439/soft-ice-cream_1f366.png">
+    <link rel="manifest" href="/manifest.json">
     <style>
         :root {
             --md-sys-color-primary: #8c520c;
@@ -479,20 +480,6 @@
             loadPresets();
             showView('home');
         });
-
-        // Check if service workers are supported
-    if ('serviceWorker' in navigator) {
-      // Register the service worker after the page has loaded
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
-      });
-    }
     </script>
 </body>
 </html>
