@@ -51,8 +51,8 @@
         #video-iframe {
             border: none;
             background-color: #000;
-	width: 100%;
-	height: 100%;
+            width: 100%;
+            height: 100%;
         }
         
         .material-icons {
@@ -104,423 +104,380 @@
     </div>
 
     <!-- Settings Modal -->
-<div id="settings-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] p-6 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 class="text-2xl font-medium mb-6">API Settings</h2>
-        
-        <div class="mb-4">
-            <label for="custom-api-url-movie" class="block mb-2 font-medium">Custom Movie API URL (Use: `{id}`):</label>
-            <input type="text" id="custom-api-url-movie" class="w-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)] rounded-lg px-4 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]" placeholder="https://.../{id}">
-        </div>
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] p-6 rounded-3xl shadow-xl w-full max-w-md">
+            <h2 class="text-2xl font-medium mb-6">API Settings</h2>
+            
+            <div class="mb-4">
+                <label for="custom-api-movie-url" class="block mb-2 font-medium">Custom Movie URL:</label>
+                <input type="text" id="custom-api-movie-url" class="w-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)] rounded-lg px-4 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]" placeholder="https://.../movie/{tmdb}">
+            </div>
+            
+            <div class="mb-4">
+                <label for="custom-api-tv-url" class="block mb-2 font-medium">Custom TV URL:</label>
+                <input type="text" id="custom-api-tv-url" class="w-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)] rounded-lg px-4 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]" placeholder="https://.../tv/{tmdb}/{season}/{episode}">
+            </div>
 
-        <div class="mb-4">
-            <label for="custom-api-url-tv" class="block mb-2 font-medium">Custom TV API URL (Use: `{id}`, `{season}`, `{episode}`):</label>
-            <input type="text" id="custom-api-url-tv" class="w-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)] rounded-lg px-4 py-2 border border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]" placeholder="https://.../{id}/{season}/{episode}">
-        </div>
-
-        <div class="mb-4">
-            <p class="mb-3 font-medium">Presets:</p>
-            <div id="preset-buttons-container" class="flex flex-wrap gap-2"></div>
-        </div>
-        <div class="flex justify-end space-x-2 mt-6">
-            <button id="close-settings" class="px-6 py-2 rounded-full hover:bg-[var(--md-sys-color-secondary-container)] transition-colors text-[var(--md-sys-color-on-secondary-container)] font-medium">Close</button>
-            <button id="save-settings" class="bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold py-2 px-6 rounded-full hover:opacity-90 transition-opacity">Save</button>
+            <div class="mb-4">
+                <p class="mb-3 font-medium">Presets:</p>
+                <div id="preset-buttons-container" class="flex flex-wrap gap-2"></div>
+            </div>
+            
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="close-settings" class="px-6 py-2 rounded-full hover:bg-[var(--md-sys-color-secondary-container)] transition-colors text-[var(--md-sys-color-on-secondary-container)] font-medium">Close</button>
+                <button id="save-settings" class="bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold py-2 px-6 rounded-full hover:opacity-90 transition-opacity">Save</button>
+            </div>
         </div>
     </div>
-</div>
 
     <script>
-       <script>
-   <script>
-    const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
+        const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
         
-    let API_PRESETS = []; // Will be loaded from external file
+        // DOM Elements
+        const searchContainer = document.getElementById('search-container');
+        const searchBar = document.getElementById('search-bar');
+        const searchResults = document.getElementById('search-results');
+        const iframeModal = document.getElementById('iframe-modal');
+        const videoIframe = document.getElementById('video-iframe');
+        const closeIframeButton = document.getElementById('close-iframe-button');
+        const seasonsContainer = document.getElementById('seasons-container');
+        const seasonsTitle = document.getElementById('seasons-title');
+        const seasonsGrid = document.getElementById('seasons-grid');
+        const episodesContainer = document.getElementById('episodes-container');
+        const episodesTitle = document.getElementById('episodes-title');
+        const episodesList = document.getElementById('episodes-list');
+        const navigationControls = document.getElementById('navigation-controls');
+        // Settings Modal Elements
+        const settingsButton = document.getElementById('settings-button');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettings = document.getElementById('close-settings');
+        const saveSettings = document.getElementById('save-settings');
+        const customApiMovieUrlInput = document.getElementById('custom-api-movie-url');
+        const customApiTvUrlInput = document.getElementById('custom-api-tv-url');
+        const presetButtonsContainer = document.getElementById('preset-buttons-container');
 
-    // DOM Elements (Updated to reflect new input IDs)
-    const searchContainer = document.getElementById('search-container');
-    const searchBar = document.getElementById('search-bar');
-    const searchResults = document.getElementById('search-results');
-    const iframeModal = document.getElementById('iframe-modal');
-    const videoIframe = document.getElementById('video-iframe');
-    const closeIframeButton = document.getElementById('close-iframe-button');
-    const seasonsContainer = document.getElementById('seasons-container');
-    const seasonsTitle = document.getElementById('seasons-title');
-    const seasonsGrid = document.getElementById('seasons-grid');
-    const episodesContainer = document.getElementById('episodes-container');
-    const episodesTitle = document.getElementById('episodes-title');
-    const episodesList = document.getElementById('episodes-list');
-    const settingsButton = document.getElementById('settings-button');
-    const settingsModal = document.getElementById('settings-modal');
-    const closeSettings = document.getElementById('close-settings');
-    const saveSettings = document.getElementById('save-settings');
-    // Renamed and split custom URL inputs
-    const customApiUrlMovieInput = document.getElementById('custom-api-url-movie');
-    const customApiUrlTvInput = document.getElementById('custom-api-url-tv');
-    const presetButtonsContainer = document.getElementById('preset-buttons-container');
-    const navigationControls = document.getElementById('navigation-controls');
-
-    // App State
-    let lastSearchResultsData = [];
-    let currentTvShowData = {};
-    
-    // Settings (Two separate variables, initialized to localStorage or empty string)
-    let customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || '';
-    let customTvApiUrl = localStorage.getItem('customTvApiUrl') || '';
-    
-    const tmdbOptions = {
-        method: 'GET',
-        headers: {
-            accept: 'application/json',
-            Authorization: `Bearer ${TMDB_API_KEY}`
-        }
-    };
-
-    // --- Fetch Presets from External File (No Hardcode) ---
-    async function fetchApiPresets() {
-        try {
-            const response = await fetch('api_sources.json'); 
-            
-            if (response.ok) {
-                API_PRESETS = await response.json();
-            } else {
-                console.warn("Failed to fetch API presets file. The presets list will be empty.");
-                API_PRESETS = [];
+        // App State
+        let lastSearchResultsData = [];
+        let currentTvShowData = {};
+        let API_PRESETS = [];
+        
+        // Settings State
+        let currentApiUrls = {
+            movie: localStorage.getItem('customApiMovieUrl') || '',
+            tv: localStorage.getItem('customApiTvUrl') || ''
+        };
+        
+        const tmdbOptions = {
+            method: 'GET',
+            headers: {
+                accept: 'application/json',
+                Authorization: `Bearer ${TMDB_API_KEY}`
             }
+        };
 
-            // Set current URLs: from localStorage, OR the first preset's URLs, OR an empty string
-            const defaultMovieUrl = API_PRESETS[0]?.movie_url || '';
-            const defaultTvUrl = API_PRESETS[0]?.tv_url || '';
-
-            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || defaultMovieUrl;
-            customTvApiUrl = localStorage.getItem('customTvApiUrl') || defaultTvUrl;
-
-            // Set input values for display/editing
-            customApiUrlMovieInput.value = customMovieApiUrl;
-            customApiUrlTvInput.value = customTvApiUrl;
-            
-            // Set placeholders for user instruction if URLs are empty
-            if (!customApiUrlMovieInput.value) {
-                customApiUrlMovieInput.placeholder = 'https://.../movie/{id}';
-            }
-            if (!customApiUrlTvInput.value) {
-                customApiUrlTvInput.placeholder = 'https://.../tv/{id}/{season}/{episode}';
-            }
-            
-            generatePresetButtons();
-            showView('home');
-
-        } catch (error) {
-            console.error("Error loading or parsing API presets:", error);
-            
-            // On a catch error, set state from localStorage (or empty string) and update inputs/placeholders
-            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || '';
-            customTvApiUrl = localStorage.getItem('customTvApiUrl') || '';
-            
-            customApiUrlMovieInput.value = customMovieApiUrl;
-            customApiUrlTvInput.value = customTvApiUrl;
-            
-            customApiUrlMovieInput.placeholder = 'https://.../movie/{id}';
-            customApiUrlTvInput.placeholder = 'https://.../tv/{id}/{season}/{episode}';
-
-            API_PRESETS = []; 
-            generatePresetButtons(); 
-            showView('home');
-        }
-    }
-
-    // --- Data Fetching & Display Logic (Original Logic) ---
-    async function search(query) {
-        if (query.length < 2) {
-            lastSearchResultsData = [];
-            showView('home');
-            return;
-        }
-        try {
-            const response = await fetch(`https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&include_adult=false`, tmdbOptions);
-            if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
-            const data = await response.json();
-            lastSearchResultsData = data.results;
-            showView('search');
-        } catch (error) {
-            console.error("Search failed:", error);
-            searchResults.innerHTML = `<p class="col-span-full text-center text-[var(--md-sys-color-error)]">Failed to load search results.</p>`;
-        }
-    }
-
-    const createPosterCard = (item) => {
-        const year = item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || 'N/A';
-        const title = item.title || item.name;
-        const type = item.media_type || (item.title ? 'movie' : 'tv');
-
-        const pirateSearchQuery = encodeURIComponent(`${title} ${year}`);
-        const pirateButton = type === 'movie' 
-            ? `<a href="https://predb.me/?search=${pirateSearchQuery}&cats=movies" target="_blank" onclick="event.stopPropagation()" class="text-xl hover:scale-125 transition-transform" title="Search on predb.me">🏴‍☠️</a>` 
-            : '';
-
-        return `
-            <div class="cursor-pointer group" data-id="${item.id}" data-type="${type}">
-                <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 aspect-[2/3]">
-                    <img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="${title}" class="w-full h-full object-cover">
-                </div>
-                <div class="mt-2 pr-2">
-                    <p class="text-sm font-medium">${title}</p>
-                    <div class="flex justify-between items-center">
-                        <p class="text-sm text-[var(--md-sys-color-on-surface-variant)]">${year}</p>
-                        ${pirateButton}
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    function displayResults(results) {
-        searchResults.innerHTML = '';
-        const validResults = results.filter(item => item.poster_path && (item.media_type === 'movie' || item.media_type === 'tv'));
-        if (validResults.length === 0) {
-                searchResults.innerHTML = `<p class="col-span-full text-center text-[var(--md-sys-color-on-surface-variant)]">No results found.</p>`;
+        // --- Data Fetching & Display Logic ---
+        async function search(query) {
+            if (query.length < 2) {
+                lastSearchResultsData = [];
+                showView('home');
                 return;
+            }
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&include_adult=false`, tmdbOptions);
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                const data = await response.json();
+                lastSearchResultsData = data.results;
+                showView('search');
+            } catch (error) {
+                console.error("Search failed:", error);
+                searchResults.innerHTML = `<p class="col-span-full text-center text-[var(--md-sys-color-error)]">Failed to load search results.</p>`;
+            }
         }
-        searchResults.innerHTML = validResults.map(createPosterCard).join('');
-    }
 
-    async function getSeasons(tvId) {
-        window.scrollTo(0, 0);
-        try {
-            const response = await fetch(`https://api.themoviedb.org/3/tv/${tvId}?language=en-US`, tmdbOptions);
-            if (!response.ok) throw new Error('API request failed');
-            const data = await response.json();
-            currentTvShowData = { id: tvId, name: data.name };
-            seasonsTitle.textContent = data.name;
-            seasonsGrid.innerHTML = data.seasons
-                .filter(season => season.poster_path)
-                .map(season => `
-                    <div class="cursor-pointer group" data-season-tv-id="${tvId}" data-season-number="${season.season_number}">
-                            <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 aspect-[2/3]">
-                            <img src="https://image.tmdb.org/t/p/w500${season.poster_path}" alt="${season.name}" class="w-full h-full object-cover">
-                            </div>
-                        <div class="mt-2">
-                            <p class="text-sm font-medium">${season.name}</p>
-                            <p class="text-sm text-[var(--md-sys-color-on-surface-variant)]">${season.air_date?.substring(0,4) || ''}</p>
+        const createPosterCard = (item) => {
+            const year = item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || 'N/A';
+            const title = item.title || item.name;
+            const type = item.media_type || (item.title ? 'movie' : 'tv');
+
+            const pirateSearchQuery = encodeURIComponent(`${title} ${year}`);
+            const pirateButton = type === 'movie' 
+                ? `<a href="https://predb.me/?search=${pirateSearchQuery}&cats=movies" target="_blank" onclick="event.stopPropagation()" class="text-xl hover:scale-125 transition-transform" title="Search on predb.me">🏴‍☠️</a>` 
+                : '';
+
+            return `
+                <div class="cursor-pointer group" data-id="${item.id}" data-type="${type}">
+                    <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 aspect-[2/3]">
+                        <img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="${title}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="mt-2 pr-2">
+                        <p class="text-sm font-medium">${title}</p>
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-[var(--md-sys-color-on-surface-variant)]">${year}</p>
+                            ${pirateButton}
                         </div>
-                    </div>`
-                ).join('');
-            showView('seasons');
-        } catch (error) { console.error("Failed to get seasons:", error); }
-    }
-    
-    function truncateToTwoSentences(text) {
-        if (!text) return { short: "No summary available.", full: "No summary available.", needsExpanding: false };
-        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-        if (sentences.length <= 2) {
-            return { short: text, full: text, needsExpanding: false };
+                    </div>
+                </div>`;
         }
-        const short = sentences.slice(0, 2).join(' ');
-        return { short: short, full: text, needsExpanding: true };
-    }
 
-    async function getEpisodes(tvId, seasonNumber) {
-        window.scrollTo(0, 0);
-        try {
-            const response = await fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNumber}?language=en-US`, tmdbOptions);
+        function displayResults(results) {
+            searchResults.innerHTML = '';
+            const validResults = results.filter(item => item.poster_path && (item.media_type === 'movie' || item.media_type === 'tv'));
+            if (validResults.length === 0) {
+                 searchResults.innerHTML = `<p class="col-span-full text-center text-[var(--md-sys-color-on-surface-variant)]">No results found.</p>`;
+                 return;
+            }
+            searchResults.innerHTML = validResults.map(createPosterCard).join('');
+        }
+
+        async function getSeasons(tvId) {
+            window.scrollTo(0, 0);
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/tv/${tvId}?language=en-US`, tmdbOptions);
                 if (!response.ok) throw new Error('API request failed');
-            const data = await response.json();
-            episodesTitle.textContent = data.name;
-            episodesList.innerHTML = '';
-            data.episodes.forEach(episode => {
-                const airDate = episode.air_date ? new Date(episode.air_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
-                const { short: shortSummary, full: fullSummary, needsExpanding } = truncateToTwoSentences(episode.overview);
+                const data = await response.json();
+                currentTvShowData = { id: tvId, name: data.name };
+                seasonsTitle.textContent = data.name;
+                seasonsGrid.innerHTML = data.seasons
+                    .filter(season => season.poster_path)
+                    .map(season => `
+                        <div class="cursor-pointer group" data-season-tv-id="${tvId}" data-season-number="${season.season_number}">
+                             <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 aspect-[2/3]">
+                                <img src="https://image.tmdb.org/t/p/w500${season.poster_path}" alt="${season.name}" class="w-full h-full object-cover">
+                             </div>
+                            <div class="mt-2">
+                                <p class="text-sm font-medium">${season.name}</p>
+                                <p class="text-sm text-[var(--md-sys-color-on-surface-variant)]">${season.air_date?.substring(0,4) || ''}</p>
+                            </div>
+                        </div>`
+                    ).join('');
+                showView('seasons');
+            } catch (error) { console.error("Failed to get seasons:", error); }
+        }
+        
+        function truncateToTwoSentences(text) {
+            if (!text) return { short: "No summary available.", full: "No summary available.", needsExpanding: false };
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+            if (sentences.length <= 2) {
+                return { short: text, full: text, needsExpanding: false };
+            }
+            const short = sentences.slice(0, 2).join(' ');
+            return { short: short, full: text, needsExpanding: true };
+        }
 
-                episodesList.innerHTML += `
-                    <div class="episode-item bg-[var(--md-sys-color-surface-variant)] rounded-xl flex flex-col hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors overflow-hidden">
-                        <div class="cursor-pointer" data-play-tv-id="${tvId}" data-play-season="${seasonNumber}" data-play-episode="${episode.episode_number}">
-                            <img src="${episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : 'https://via.placeholder.com/500x281.png?text=No+Image'}" alt="${episode.name}" class="w-full h-auto object-cover aspect-video">
+        async function getEpisodes(tvId, seasonNumber) {
+            window.scrollTo(0, 0);
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNumber}?language=en-US`, tmdbOptions);
+                 if (!response.ok) throw new Error('API request failed');
+                const data = await response.json();
+                episodesTitle.textContent = data.name;
+                episodesList.innerHTML = '';
+                data.episodes.forEach(episode => {
+                    const airDate = episode.air_date ? new Date(episode.air_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
+                    const { short: shortSummary, full: fullSummary, needsExpanding } = truncateToTwoSentences(episode.overview);
+
+                    episodesList.innerHTML += `
+                        <div class="episode-item bg-[var(--md-sys-color-surface-variant)] rounded-xl flex flex-col hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors overflow-hidden">
+                            <div class="cursor-pointer" data-play-tv-id="${tvId}" data-play-season="${seasonNumber}" data-play-episode="${episode.episode_number}">
+                                <img src="${episode.still_path ? `https://image.tmdb.org/t/p/w500${episode.still_path}` : 'https://via.placeholder.com/500x281.png?text=No+Image'}" alt="${episode.name}" class="w-full h-auto object-cover aspect-video">
+                            </div>
+                            <div class="p-4 flex-grow flex flex-col">
+                                <h4 class="font-bold text-base">${episode.episode_number}. ${episode.name}</h4>
+                                <p class="text-sm text-[var(--md-sys-color-on-surface-variant)] mt-1">${airDate}</p>
+                                <div class="mt-2 text-sm text-[var(--md-sys-color-on-surface-variant)] flex-grow">
+                                    <p class="summary-text-short">${shortSummary}</p>
+                                    <p class="summary-text-full hidden">${fullSummary}</p>
+                                </div>
+                                ${needsExpanding ? `
+                                <button class="expand-summary-btn flex items-center text-[var(--md-sys-color-primary)] font-medium text-sm self-start mt-2" aria-expanded="false">
+                                    <span class="material-icons">expand_more</span>
+                                    <span class="ml-1 button-text">More</span>
+                                </button>` : ''}
+                            </div>
+                        </div>`;
+                });
+                showView('episodes');
+            } catch (error) { console.error("Failed to get episodes:", error); }
+        }
+
+        // --- Player & State Management ---
+        function playVideo(type, id, season = null, episode = null) {
+            let url;
+            if (type === 'movie') {
+                url = currentApiUrls.movie.replace('{tmdb}', id);
+            } else if (type === 'tv' && season && episode) {
+                url = currentApiUrls.tv
+                    .replace('{tmdb}', id)
+                    .replace('{season}', season)
+                    .replace('{episode}', episode);
+            } else {
+                console.error("Invalid parameters for playVideo");
+                return;
+            }
+
+            videoIframe.src = url;
+            iframeModal.classList.remove('hidden');
+            iframeModal.classList.add('flex');
+        }
+        
+        function closeIframeModal() {
+            iframeModal.classList.add('hidden');
+            iframeModal.classList.remove('flex');
+            videoIframe.src = ''; 
+        }
+
+        // --- UI & Navigation ---
+        function showView(view) {
+            searchResults.style.display = 'none';
+            seasonsContainer.classList.add('hidden');
+            episodesContainer.classList.add('hidden');
+            navigationControls.innerHTML = '';
+
+            const backButton = (id, text) => `<button id="${id}" class="bg-[var(--md-sys-color-secondary-container)] hover:opacity-90 text-[var(--md-sys-color-on-secondary-container)] font-bold py-2 px-4 rounded-full flex items-center transition-opacity"><span class="material-icons mr-2">arrow_back</span> ${text}</button>`;
+
+            switch(view) {
+                case 'home':
+                    searchContainer.style.display = 'block';
+                    searchResults.style.display = 'grid';
+                     searchResults.innerHTML = `
+                        <div class="group">
+                            <a href="https://www.flicks.co.nz/now-playing/" target="_blank" rel="noopener noreferrer" class="cursor-pointer">
+                                <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center aspect-square p-4 text-6xl">
+                                    <span>🎥</span>
+                                </div>
+                                <div class="mt-2 pr-2">
+                                    <p class="text-md font-medium">Cinemas</p>
+                                </div>
+                            </a>
                         </div>
-                        <div class="p-4 flex-grow flex flex-col">
-                            <h4 class="font-bold text-base">${episode.episode_number}. ${episode.name}</h4>
-                            <p class="text-sm text-[var(--md-sys-color-on-surface-variant)] mt-1">${airDate}</p>
-                            <div class="mt-2 text-sm text-[var(--md-sys-color-on-surface-variant)] flex-grow">
-                                <p class="summary-text-short">${shortSummary}</p>
-                                <p class="summary-text-full hidden">${fullSummary}</p>
-                            </div>
-                            ${needsExpanding ? `
-                            <button class="expand-summary-btn flex items-center text-[var(--md-sys-color-primary)] font-medium text-sm self-start mt-2" aria-expanded="false">
-                                <span class="material-icons">expand_more</span>
-                                <span class="ml-1 button-text">More</span>
-                            </button>` : ''}
+                        <div class="group">
+                            <a href="https://www.flicks.co.nz/on-demand/" target="_blank" rel="noopener noreferrer" class="cursor-pointer">
+                                <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center aspect-square p-4 text-6xl">
+                                    <span>📺</span>
+                                </div>
+                                <div class="mt-2 pr-2">
+                                    <p class="text-md font-medium">Streaming</p>
+                                </div>
+                            </a>
                         </div>
-                    </div>`;
+                    `;
+                    break;
+                case 'search':
+                    searchContainer.style.display = 'block';
+                    searchResults.style.display = 'grid';
+                    displayResults(lastSearchResultsData);
+                    break;
+                case 'seasons':
+                    seasonsContainer.classList.remove('hidden');
+                    navigationControls.innerHTML = backButton('back-to-search', 'Back to Search');
+                    break;
+                case 'episodes':
+                    episodesContainer.classList.remove('hidden');
+                    navigationControls.innerHTML = backButton('back-to-seasons', 'Back to Seasons');
+                    break;
+            }
+        }
+        
+        async function loadPresets() {
+            try {
+                const response = await fetch('presets.json');
+                if (!response.ok) throw new Error('Network response was not ok');
+                API_PRESETS = await response.json();
+                
+                // Set default URLs from the first preset if not already in localStorage
+                if (!localStorage.getItem('customApiMovieUrl') && API_PRESETS.length > 0) {
+                    currentApiUrls.movie = API_PRESETS[0].movie_url;
+                    currentApiUrls.tv = API_PRESETS[0].tv_url;
+                    localStorage.setItem('customApiMovieUrl', currentApiUrls.movie);
+                    localStorage.setItem('customApiTvUrl', currentApiUrls.tv);
+                }
+                
+                // Populate settings modal inputs and generate buttons
+                customApiMovieUrlInput.value = currentApiUrls.movie;
+                customApiTvUrlInput.value = currentApiUrls.tv;
+                generatePresetButtons();
+
+            } catch (error) {
+                console.error('Failed to load presets:', error);
+                presetButtonsContainer.innerHTML = `<p class="text-sm text-[var(--md-sys-color-error)]">Could not load presets.</p>`;
+            }
+        }
+
+        function generatePresetButtons() {
+            presetButtonsContainer.innerHTML = '';
+            API_PRESETS.forEach(preset => {
+                const button = document.createElement('button');
+                button.className = "preset-btn bg-[var(--md-sys-color-tertiary)] hover:opacity-90 text-[var(--md-sys-color-on-tertiary)] font-medium py-2 px-4 rounded-full transition-opacity";
+                button.textContent = preset.name;
+                button.addEventListener('click', () => {
+                    customApiMovieUrlInput.value = preset.movie_url;
+                    customApiTvUrlInput.value = preset.tv_url;
+                });
+                presetButtonsContainer.appendChild(button);
             });
-            showView('episodes');
-        } catch (error) { console.error("Failed to get episodes:", error); }
-    }
-
-    // --- Player & State Management (Updated for Two URLs) ---
-    function playVideo(type, id, season = null, episode = null) {
-        let url = '';
-        if (type === 'movie') {
-            url = customMovieApiUrl.replace('{id}', id);
-        } else if (type === 'tv' && season && episode) {
-            url = customTvApiUrl
-                .replace('{id}', id)
-                .replace('{season}', season)
-                .replace('{episode}', episode);
         }
 
-        if (!url) {
-            alert('API URL not set. Please go to Settings and set a Custom URL or select a Preset.');
-            return;
-        }
+        // --- Event Listeners ---
+        searchBar.addEventListener('keyup', (e) => search(e.target.value));
 
-        videoIframe.src = url;
-        iframeModal.classList.remove('hidden');
-        iframeModal.classList.add('flex');
-    }
-    
-    function closeIframeModal() {
-        iframeModal.classList.add('hidden');
-        iframeModal.classList.remove('flex');
-        videoIframe.src = ''; 
-    }
-
-    // --- UI & Navigation (Original Logic) ---
-    function showView(view) {
-        searchResults.style.display = 'none';
-        seasonsContainer.classList.add('hidden');
-        episodesContainer.classList.add('hidden');
-        navigationControls.innerHTML = '';
-
-        const backButton = (id, text) => `<button id="${id}" class="bg-[var(--md-sys-color-secondary-container)] hover:opacity-90 text-[var(--md-sys-color-on-secondary-container)] font-bold py-2 px-4 rounded-full flex items-center transition-opacity"><span class="material-icons mr-2">arrow_back</span> ${text}</button>`;
-
-        switch(view) {
-            case 'home':
-                searchContainer.style.display = 'block';
-                searchResults.style.display = 'grid';
-                searchResults.innerHTML = `
-                    <div class="group">
-                        <a href="https://www.flicks.co.nz/now-playing/" target="_blank" rel="noopener noreferrer" class="cursor-pointer">
-                            <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center aspect-square p-4 text-6xl">
-                                <span>🎥</span>
-                            </div>
-                            <div class="mt-2 pr-2">
-                                <p class="text-md font-medium">Cinemas</p>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="group">
-                        <a href="https://www.flicks.co.nz/on-demand/" target="_blank" rel="noopener noreferrer" class="cursor-pointer">
-                            <div class="relative shadow-md rounded-xl overflow-hidden group-hover:shadow-xl transition-shadow duration-300 transform group-hover:scale-105 bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center aspect-square p-4 text-6xl">
-                                <span>📺</span>
-                            </div>
-                            <div class="mt-2 pr-2">
-                                <p class="text-md font-medium">Streaming</p>
-                            </div>
-                        </a>
-                    </div>
-                `;
-                break;
-            case 'search':
-                searchContainer.style.display = 'block';
-                searchResults.style.display = 'grid';
-                displayResults(lastSearchResultsData);
-                break;
-            case 'seasons':
-                seasonsContainer.classList.remove('hidden');
-                navigationControls.innerHTML = backButton('back-to-search', 'Back to Search');
-                break;
-            case 'episodes':
-                episodesContainer.classList.remove('hidden');
-                navigationControls.innerHTML = backButton('back-to-seasons', 'Back to Seasons');
-                break;
-        }
-    }
-    
-    // Function to generate preset buttons for two URLs
-    function generatePresetButtons() {
-        presetButtonsContainer.innerHTML = '';
-        API_PRESETS.forEach(preset => {
-            const button = document.createElement('button');
-            button.className = "preset-btn bg-[var(--md-sys-color-tertiary)] hover:opacity-90 text-[var(--md-sys-color-on-tertiary)] font-medium py-2 px-4 rounded-full transition-opacity";
-            button.dataset.movieUrl = preset.movie_url;
-            button.dataset.tvUrl = preset.tv_url;
-            button.textContent = preset.name;
-            button.addEventListener('click', () => {
-                customApiUrlMovieInput.value = preset.movie_url;
-                customApiUrlTvInput.value = preset.tv_url;
-                customApiUrlMovieInput.placeholder = 'https://.../movie/{id}'; // Clear instructional placeholder
-                customApiUrlTvInput.placeholder = 'https://.../tv/{id}/{season}/{episode}'; // Clear instructional placeholder
-            });
-            presetButtonsContainer.appendChild(button);
-        });
-    }
-
-    // --- Event Listeners (Updated for Two URL Settings) ---
-    searchBar.addEventListener('keyup', (e) => search(e.target.value));
-
-    document.addEventListener('click', (e) => {
-        const expandBtn = e.target.closest('.expand-summary-btn');
-        if (expandBtn) {
-            const isExpanded = expandBtn.getAttribute('aria-expanded') === 'true';
-            expandBtn.setAttribute('aria-expanded', !isExpanded);
+        document.addEventListener('click', (e) => {
+            const expandBtn = e.target.closest('.expand-summary-btn');
+            if (expandBtn) {
+                const isExpanded = expandBtn.getAttribute('aria-expanded') === 'true';
+                expandBtn.setAttribute('aria-expanded', !isExpanded);
+                
+                const container = expandBtn.closest('.episode-item');
+                container.querySelector('.summary-text-short').classList.toggle('hidden');
+                container.querySelector('.summary-text-full').classList.toggle('hidden');
+                expandBtn.querySelector('.button-text').textContent = isExpanded ? 'More' : 'Less';
+                return;
+            }
             
-            const container = expandBtn.closest('.episode-item');
-            container.querySelector('.summary-text-short').classList.toggle('hidden');
-            container.querySelector('.summary-text-full').classList.toggle('hidden');
-            expandBtn.querySelector('.button-text').textContent = isExpanded ? 'More' : 'Less';
-            return;
-        }
-        
-        const movieCard = e.target.closest('[data-id][data-type]');
-        if (movieCard) {
-            const id = movieCard.dataset.id;
-            const type = movieCard.dataset.type;
-            type === 'movie' ? playVideo(type, id) : getSeasons(id);
-            return;
-        }
+            const movieCard = e.target.closest('[data-id][data-type]');
+            if (movieCard) {
+                const id = movieCard.dataset.id;
+                const type = movieCard.dataset.type;
+                type === 'movie' ? playVideo(type, id) : getSeasons(id);
+                return;
+            }
 
-        const seasonCard = e.target.closest('[data-season-tv-id]');
-        if (seasonCard) {
-            getEpisodes(seasonCard.dataset.seasonTvId, seasonCard.dataset.seasonNumber);
-            return;
-        }
+            const seasonCard = e.target.closest('[data-season-tv-id]');
+            if (seasonCard) {
+                getEpisodes(seasonCard.dataset.seasonTvId, seasonCard.dataset.seasonNumber);
+                return;
+            }
 
-        const episodePlay = e.target.closest('[data-play-tv-id]');
-        if (episodePlay) {
-            playVideo('tv', episodePlay.dataset.playTvId, episodePlay.dataset.playSeason, episodePlay.dataset.playEpisode);
-            return;
-        }
+            const episodePlay = e.target.closest('[data-play-tv-id]');
+            if (episodePlay) {
+                playVideo('tv', episodePlay.dataset.playTvId, episodePlay.dataset.playSeason, episodePlay.dataset.playEpisode);
+                return;
+            }
+            
+            if (e.target.id === 'back-to-search') showView('search');
+            if (e.target.id === 'back-to-seasons') showView('seasons');
+        });
         
-        if (e.target.id === 'back-to-search') showView('search');
-        if (e.target.id === 'back-to-seasons') showView('seasons');
-    });
-    
-    iframeModal.addEventListener('click', (e) => {
-        if (e.target === iframeModal) closeIframeModal();
-    });
-    closeIframeButton.addEventListener('click', closeIframeModal);
-    
-    settingsButton.addEventListener('click', () => { settingsModal.style.display = 'flex' });
-    closeSettings.addEventListener('click', () => { settingsModal.style.display = 'none' });
-    
-    // Updated saveSettings logic
-    saveSettings.addEventListener('click', () => {
-        // Save the current input values to state and local storage
-        customMovieApiUrl = customApiUrlMovieInput.value.trim();
-        customTvApiUrl = customApiUrlTvInput.value.trim();
-        localStorage.setItem('customMovieApiUrl', customMovieApiUrl);
-        localStorage.setItem('customTvApiUrl', customTvApiUrl);
+        iframeModal.addEventListener('click', (e) => {
+            if (e.target === iframeModal) closeIframeModal();
+        });
+        closeIframeButton.addEventListener('click', closeIframeModal);
         
-        // Ensure placeholders are reset if the field is empty, otherwise remove the placeholder
-        customApiUrlMovieInput.placeholder = customMovieApiUrl ? '' : 'https://.../movie/{id}';
-        customApiUrlTvInput.placeholder = customTvApiUrl ? '' : 'https://.../tv/{id}/{season}/{episode}';
-        
-        settingsModal.style.display = 'none';
-    });
+        // Settings listeners
+        settingsButton.addEventListener('click', () => { settingsModal.style.display = 'flex' });
+        closeSettings.addEventListener('click', () => { settingsModal.style.display = 'none' });
+        saveSettings.addEventListener('click', () => {
+            currentApiUrls.movie = customApiMovieUrlInput.value;
+            currentApiUrls.tv = customApiTvUrlInput.value;
+            localStorage.setItem('customApiMovieUrl', currentApiUrls.movie);
+            localStorage.setItem('customApiTvUrl', currentApiUrls.tv);
+            settingsModal.style.display = 'none';
+        });
 
-    // --- Initial Load (Updated) ---
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchApiPresets(); // Call the async load function
-    });
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPresets();
+            showView('home');
+        });
     </script>
 </body>
 </html>
-
-
