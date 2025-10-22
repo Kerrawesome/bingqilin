@@ -4,6 +4,8 @@
     "start_url": "/index.html",
     "scope": "/",
     "display": "standalone",
+    "background_color": "#fef7f0"
+    "theme_color": "#fffbff"
     "icons": [
         {
             "src": "https://em-content.zobj.net/source/google/387/soft-ice-cream_1f366.png",
@@ -12,6 +14,7 @@
         }
     ]
 }
+
 
 
 
