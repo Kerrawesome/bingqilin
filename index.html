@@ -131,6 +131,7 @@
 
     <script>
        <script>
+   <script>
     const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
         
     let API_PRESETS = []; // Will be loaded from external file
@@ -162,7 +163,7 @@
     let lastSearchResultsData = [];
     let currentTvShowData = {};
     
-    // Settings (Updated to two separate variables, initialized to localStorage or empty string)
+    // Settings (Two separate variables, initialized to localStorage or empty string)
     let customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || '';
     let customTvApiUrl = localStorage.getItem('customTvApiUrl') || '';
     
@@ -174,32 +175,35 @@
         }
     };
 
-    // --- New Fetching Function with No Hardcode ---
+    // --- Fetch Presets from External File (No Hardcode) ---
     async function fetchApiPresets() {
         try {
             const response = await fetch('api_sources.json'); 
             
-            if (!response.ok) {
-                console.warn("Failed to fetch API presets file. The presets list will be empty.");
-                API_PRESETS = []; 
-            } else {
+            if (response.ok) {
                 API_PRESETS = await response.json();
+            } else {
+                console.warn("Failed to fetch API presets file. The presets list will be empty.");
+                API_PRESETS = [];
             }
 
-            // Set current URLs: from localStorage, OR the first preset's URLs, OR an empty string.
-            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || API_PRESETS[0]?.movie_url || '';
-            customTvApiUrl = localStorage.getItem('customTvApiUrl') || API_PRESETS[0]?.tv_url || '';
+            // Set current URLs: from localStorage, OR the first preset's URLs, OR an empty string
+            const defaultMovieUrl = API_PRESETS[0]?.movie_url || '';
+            const defaultTvUrl = API_PRESETS[0]?.tv_url || '';
+
+            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || defaultMovieUrl;
+            customTvApiUrl = localStorage.getItem('customTvApiUrl') || defaultTvUrl;
 
             // Set input values for display/editing
             customApiUrlMovieInput.value = customMovieApiUrl;
             customApiUrlTvInput.value = customTvApiUrl;
             
-            // Set placeholders if the inputs are empty for user instruction
+            // Set placeholders for user instruction if URLs are empty
             if (!customApiUrlMovieInput.value) {
-                customApiUrlMovieInput.placeholder = 'Movie URL required (e.g., https://source.com/movie/{id})';
+                customApiUrlMovieInput.placeholder = 'https://.../movie/{id}';
             }
             if (!customApiUrlTvInput.value) {
-                customApiUrlTvInput.placeholder = 'TV URL required (e.g., https://source.com/tv/{id}/{season}/{episode})';
+                customApiUrlTvInput.placeholder = 'https://.../tv/{id}/{season}/{episode}';
             }
             
             generatePresetButtons();
@@ -215,21 +219,16 @@
             customApiUrlMovieInput.value = customMovieApiUrl;
             customApiUrlTvInput.value = customTvApiUrl;
             
-            if (!customApiUrlMovieInput.value) {
-                customApiUrlMovieInput.placeholder = 'Movie URL required (e.g., https://source.com/movie/{id})';
-            }
-            if (!customApiUrlTvInput.value) {
-                customApiUrlTvInput.placeholder = 'TV URL required (e.g., https://source.com/tv/{id}/{season}/{episode})';
-            }
+            customApiUrlMovieInput.placeholder = 'https://.../movie/{id}';
+            customApiUrlTvInput.placeholder = 'https://.../tv/{id}/{season}/{episode}';
 
-            API_PRESETS = []; // Ensure presets are empty
-            generatePresetButtons(); // Will generate no buttons
+            API_PRESETS = []; 
+            generatePresetButtons(); 
             showView('home');
         }
     }
 
-
-    // --- Data Fetching & Display Logic (Same as before) ---
+    // --- Data Fetching & Display Logic (Original Logic) ---
     async function search(query) {
         if (query.length < 2) {
             lastSearchResultsData = [];
@@ -354,7 +353,7 @@
         } catch (error) { console.error("Failed to get episodes:", error); }
     }
 
-    // --- Player & State Management (Updated) ---
+    // --- Player & State Management (Updated for Two URLs) ---
     function playVideo(type, id, season = null, episode = null) {
         let url = '';
         if (type === 'movie') {
@@ -366,7 +365,6 @@
                 .replace('{episode}', episode);
         }
 
-        // Check if a valid URL was constructed (i.e., not an empty string)
         if (!url) {
             alert('API URL not set. Please go to Settings and set a Custom URL or select a Preset.');
             return;
@@ -383,7 +381,7 @@
         videoIframe.src = ''; 
     }
 
-    // --- UI & Navigation (Same as before) ---
+    // --- UI & Navigation (Original Logic) ---
     function showView(view) {
         searchResults.style.display = 'none';
         seasonsContainer.classList.add('hidden');
@@ -435,7 +433,7 @@
         }
     }
     
-    // Updated function to handle two URLs
+    // Function to generate preset buttons for two URLs
     function generatePresetButtons() {
         presetButtonsContainer.innerHTML = '';
         API_PRESETS.forEach(preset => {
@@ -447,12 +445,14 @@
             button.addEventListener('click', () => {
                 customApiUrlMovieInput.value = preset.movie_url;
                 customApiUrlTvInput.value = preset.tv_url;
+                customApiUrlMovieInput.placeholder = 'https://.../movie/{id}'; // Clear instructional placeholder
+                customApiUrlTvInput.placeholder = 'https://.../tv/{id}/{season}/{episode}'; // Clear instructional placeholder
             });
             presetButtonsContainer.appendChild(button);
         });
     }
 
-    // --- Event Listeners (Updated saveSettings) ---
+    // --- Event Listeners (Updated for Two URL Settings) ---
     searchBar.addEventListener('keyup', (e) => search(e.target.value));
 
     document.addEventListener('click', (e) => {
@@ -508,9 +508,9 @@
         localStorage.setItem('customMovieApiUrl', customMovieApiUrl);
         localStorage.setItem('customTvApiUrl', customTvApiUrl);
         
-        // Reset placeholders if needed
-        customApiUrlMovieInput.placeholder = 'Movie URL required (e.g., https://source.com/movie/{id})';
-        customApiUrlTvInput.placeholder = 'TV URL required (e.g., https://source.com/tv/{id}/{season}/{episode})';
+        // Ensure placeholders are reset if the field is empty, otherwise remove the placeholder
+        customApiUrlMovieInput.placeholder = customMovieApiUrl ? '' : 'https://.../movie/{id}';
+        customApiUrlTvInput.placeholder = customTvApiUrl ? '' : 'https://.../tv/{id}/{season}/{episode}';
         
         settingsModal.style.display = 'none';
     });
@@ -519,8 +519,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         fetchApiPresets(); // Call the async load function
     });
-</script>
-</script>
     </script>
 </body>
 </html>
