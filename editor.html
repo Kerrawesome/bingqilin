@@ -25,59 +25,50 @@
         const saveButton = document.getElementById('saveButton');
         const statusDiv = document.getElementById('status');
 
-        // Function to load the current JSON content from the worker
-        async function loadPresets() {
-            statusDiv.textContent = 'Loading...';
-            try {
-                const response = await fetch(WORKER_URL, { method: 'GET' });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-                // Pretty-print the JSON in the textarea
-                editor.value = JSON.stringify(data, null, 2);
-                statusDiv.textContent = 'Loaded successfully.';
-            } catch (error) {
-                console.error('Error loading presets:', error);
-                statusDiv.textContent = `Error loading presets: ${error.message}`;
-            }
+       // Function to save the new JSON content via the worker (IMPROVED VERSION)
+async function savePresets() {
+    statusDiv.textContent = 'Saving...';
+    saveButton.disabled = true;
+
+    // 1. Client-side validation: Check for valid JSON before sending
+    try {
+        JSON.parse(editor.value);
+    } catch (error) {
+        statusDiv.textContent = `Error: Invalid JSON format in text area. Please fix it. Details: ${error.message}`;
+        saveButton.disabled = false;
+        return; // Stop here if the JSON is bad
+    }
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: editor.value
+        });
+
+        // 2. Server-side validation: Check the response from the worker
+        if (!response.ok) {
+            // If the server returned an error (like 404 Not Found or 500 Server Error),
+            // get the error message as plain text.
+            const errorText = await response.text();
+            throw new Error(`The server returned an error: ${response.status} - ${errorText}`);
         }
 
-        // Function to save the new JSON content via the worker
-        async function savePresets() {
-            statusDiv.textContent = 'Saving...';
-            saveButton.disabled = true;
+        const result = await response.json();
 
-            try {
-                // First, validate that the content is valid JSON before sending
-                JSON.parse(editor.value);
-
-                const response = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: editor.value
-                });
-                
-                const result = await response.json();
-
-                if (!response.ok || !result.success) {
-                    throw new Error(result.message || 'Failed to save.');
-                }
-
-                statusDiv.textContent = 'Saved successfully!';
-
-            } catch (error) {
-                console.error('Error saving presets:', error);
-                // Handle JSON parsing error specifically
-                if (error instanceof SyntaxError) {
-                    statusDiv.textContent = 'Error: Invalid JSON format. Please correct it and try again.';
-                } else {
-                    statusDiv.textContent = `Error saving presets: ${error.message}`;
-                }
-            } finally {
-                saveButton.disabled = false;
-            }
+        if (!result.success) {
+            throw new Error(result.message || 'The worker reported a failure.');
         }
+
+        statusDiv.textContent = 'Saved successfully!';
+
+    } catch (error) {
+        console.error('Error saving presets:', error);
+        statusDiv.textContent = `Error: ${error.message}`;
+    } finally {
+        saveButton.disabled = false;
+    }
+}
 
         // Add event listener to the save button
         saveButton.addEventListener('click', savePresets);
