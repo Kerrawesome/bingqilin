@@ -1,8 +1,7 @@
 {
     "name": "Bing Qilin",
     "short_name": "冰淇淋",
-    "start_url": "/index.html",
-    "scope": "/",
+    "start_url": "index.html",
     "display": "standalone",
     "background_color": "#fef7f0"
     "theme_color": "#fffbff"
@@ -14,6 +13,7 @@
         }
     ]
 }
+
 
 
 
