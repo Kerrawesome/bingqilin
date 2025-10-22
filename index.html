@@ -130,7 +130,8 @@
 </div>
 
     <script>
-        const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMjU2OC41NTY3MDEsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
+       <script>
+    const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TRZDf_GmWas5rFhq-6wzT7RUJOCxvCUFf6hT-Jd9iIM";
         
     let API_PRESETS = []; // Will be loaded from external file
 
@@ -161,7 +162,7 @@
     let lastSearchResultsData = [];
     let currentTvShowData = {};
     
-    // Settings (Updated to two separate variables)
+    // Settings (Updated to two separate variables, initialized to localStorage or empty string)
     let customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || '';
     let customTvApiUrl = localStorage.getItem('customTvApiUrl') || '';
     
@@ -173,41 +174,56 @@
         }
     };
 
-    // --- New Fetching Function ---
+    // --- New Fetching Function with No Hardcode ---
     async function fetchApiPresets() {
         try {
             const response = await fetch('api_sources.json'); 
             
             if (!response.ok) {
-                console.warn("Failed to fetch API presets file. Using hardcoded fallback.");
-                // Fallback data structure updated
-                API_PRESETS = [
-                    { name: "Fallback Source", movie_url: "https://vidfast.pro/movie/{id}", tv_url: "https://vidfast.pro/tv/{id}/{season}/{episode}" }
-                ];
+                console.warn("Failed to fetch API presets file. The presets list will be empty.");
+                API_PRESETS = []; 
             } else {
                 API_PRESETS = await response.json();
             }
 
-            // Set initial custom URLs based on localStorage or the first preset
-            const defaultMovieUrl = API_PRESETS[0]?.movie_url || 'https://vidfast.pro/movie/{id}';
-            const defaultTvUrl = API_PRESETS[0]?.tv_url || 'https://vidfast.pro/tv/{id}/{season}/{episode}';
+            // Set current URLs: from localStorage, OR the first preset's URLs, OR an empty string.
+            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || API_PRESETS[0]?.movie_url || '';
+            customTvApiUrl = localStorage.getItem('customTvApiUrl') || API_PRESETS[0]?.tv_url || '';
 
-            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || defaultMovieUrl;
-            customTvApiUrl = localStorage.getItem('customTvApiUrl') || defaultTvUrl;
-
+            // Set input values for display/editing
             customApiUrlMovieInput.value = customMovieApiUrl;
             customApiUrlTvInput.value = customTvApiUrl;
+            
+            // Set placeholders if the inputs are empty for user instruction
+            if (!customApiUrlMovieInput.value) {
+                customApiUrlMovieInput.placeholder = 'Movie URL required (e.g., https://source.com/movie/{id})';
+            }
+            if (!customApiUrlTvInput.value) {
+                customApiUrlTvInput.placeholder = 'TV URL required (e.g., https://source.com/tv/{id}/{season}/{episode})';
+            }
             
             generatePresetButtons();
             showView('home');
 
         } catch (error) {
             console.error("Error loading or parsing API presets:", error);
-            // Minimal error fallback
-            customMovieApiUrl = 'https://error.com/movie/{id}';
-            customTvApiUrl = 'https://error.com/tv/{id}/{season}/{episode}';
+            
+            // On a catch error, set state from localStorage (or empty string) and update inputs/placeholders
+            customMovieApiUrl = localStorage.getItem('customMovieApiUrl') || '';
+            customTvApiUrl = localStorage.getItem('customTvApiUrl') || '';
+            
             customApiUrlMovieInput.value = customMovieApiUrl;
             customApiUrlTvInput.value = customTvApiUrl;
+            
+            if (!customApiUrlMovieInput.value) {
+                customApiUrlMovieInput.placeholder = 'Movie URL required (e.g., https://source.com/movie/{id})';
+            }
+            if (!customApiUrlTvInput.value) {
+                customApiUrlTvInput.placeholder = 'TV URL required (e.g., https://source.com/tv/{id}/{season}/{episode})';
+            }
+
+            API_PRESETS = []; // Ensure presets are empty
+            generatePresetButtons(); // Will generate no buttons
             showView('home');
         }
     }
@@ -348,8 +364,11 @@
                 .replace('{id}', id)
                 .replace('{season}', season)
                 .replace('{episode}', episode);
-        } else {
-            console.error("Invalid playVideo call:", type, id, season, episode);
+        }
+
+        // Check if a valid URL was constructed (i.e., not an empty string)
+        if (!url) {
+            alert('API URL not set. Please go to Settings and set a Custom URL or select a Preset.');
             return;
         }
 
@@ -483,18 +502,24 @@
     
     // Updated saveSettings logic
     saveSettings.addEventListener('click', () => {
-        customMovieApiUrl = customApiUrlMovieInput.value;
-        customTvApiUrl = customApiUrlTvInput.value;
+        // Save the current input values to state and local storage
+        customMovieApiUrl = customApiUrlMovieInput.value.trim();
+        customTvApiUrl = customApiUrlTvInput.value.trim();
         localStorage.setItem('customMovieApiUrl', customMovieApiUrl);
         localStorage.setItem('customTvApiUrl', customTvApiUrl);
+        
+        // Reset placeholders if needed
+        customApiUrlMovieInput.placeholder = 'Movie URL required (e.g., https://source.com/movie/{id})';
+        customApiUrlTvInput.placeholder = 'TV URL required (e.g., https://source.com/tv/{id}/{season}/{episode})';
+        
         settingsModal.style.display = 'none';
     });
 
     // --- Initial Load (Updated) ---
     document.addEventListener('DOMContentLoaded', () => {
-        fetchApiPresets(); // Call the new async load function
-        // showView('home') is now called inside fetchApiPresets()
+        fetchApiPresets(); // Call the async load function
     });
+</script>
 </script>
     </script>
 </body>
