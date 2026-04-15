@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <title>Bingqilin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#c8692a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Bingqilin" />
+  <link rel="apple-touch-icon" href="https://em-content.zobj.net/source/microsoft-teams/400/soft-ice-cream_1f366.png" />
+  <meta name="description" content="Search and watch movies &amp; TV shows" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -227,6 +237,18 @@
     .offline-banner.visible { display: flex; }
     .offline-banner .material-icons { font-size: 18px; }
 
+    .install-banner { display: none; align-items: center; gap: 0.6rem; background: var(--surface); border-bottom: 1px solid var(--border-med); padding: 0.5rem 1rem; font-size: 0.82rem; color: var(--text); flex-wrap: wrap; }
+    .install-banner.visible { display: flex; }
+    .install-banner__icon { font-size: 1.3rem; flex-shrink: 0; }
+    .install-banner__text { flex: 1; min-width: 120px; color: var(--text-muted); }
+    .install-banner__text strong { color: var(--text); }
+    .install-banner__actions { display: flex; gap: 0.4rem; align-items: center; }
+    .install-banner__btn { border: none; border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: filter var(--t); }
+    .install-banner__btn--primary { background: var(--primary); color: #fff; }
+    .install-banner__btn--primary:hover { filter: brightness(1.07); }
+    .install-banner__btn--ghost { background: transparent; color: var(--text-muted); }
+    .install-banner__btn--ghost:hover { background: var(--bg2); }
+
     .hidden { display: none !important; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   </style>
@@ -236,6 +258,15 @@
   <div id="offlineBanner" class="offline-banner" role="alert">
     <span class="material-icons">wifi_off</span>
     <span>You're offline — search and images won't load, but the player may still work.</span>
+  </div>
+
+  <div id="installBanner" class="install-banner" role="complementary" aria-label="Install app">
+    <span class="install-banner__icon">🍦</span>
+    <span class="install-banner__text"><strong>Add Bingqilin to your home screen</strong> for a faster, app-like experience.</span>
+    <div class="install-banner__actions">
+      <button id="installBtn" class="install-banner__btn install-banner__btn--primary" type="button">Install</button>
+      <button id="installDismiss" class="install-banner__btn install-banner__btn--ghost" type="button">Not now</button>
+    </div>
   </div>
 
   <header class="top-bar">
@@ -373,7 +404,51 @@
 
 <script src="presets.js"></script>
 <script>
-/* ── Presets from presets.js ── */
+/* ── PWA: Service Worker registration ── */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(reg => console.log("SW registered:", reg.scope))
+      .catch(err => console.warn("SW registration failed:", err));
+  });
+}
+
+/* ── PWA: Install prompt (Add to Home Screen) ── */
+let deferredInstallPrompt = null;
+const installBanner = document.getElementById("installBanner");
+const installBtn    = document.getElementById("installBtn");
+const installDismiss = document.getElementById("installDismiss");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Only show if not already dismissed this session
+  if (!sessionStorage.getItem("installDismissed")) {
+    installBanner.classList.add("visible");
+  }
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+  installBanner.classList.remove("visible");
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  console.log("Install prompt outcome:", outcome);
+  deferredInstallPrompt = null;
+});
+
+installDismiss.addEventListener("click", () => {
+  installBanner.classList.remove("visible");
+  sessionStorage.setItem("installDismissed", "1");
+});
+
+window.addEventListener("appinstalled", () => {
+  installBanner.classList.remove("visible");
+  deferredInstallPrompt = null;
+  console.log("Bingqilin installed as PWA");
+});
+
+/* ── PWA: Presets ── */
 const API_PRESETS = Array.isArray(window.API_PRESETS) ? window.API_PRESETS : [];
 let currentPresetIndex = (typeof window.DEFAULT_PRESET_INDEX === "number") ? window.DEFAULT_PRESET_INDEX : 0;
 if (!API_PRESETS.length) console.warn("Bingqilin: presets.js loaded no presets.");
