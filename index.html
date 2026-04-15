@@ -126,19 +126,16 @@
     .roll-strip__label strong { color: var(--text); font-weight: 500; }
 
     .rolled-ep-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      overflow: hidden; display: flex; flex-direction: row; margin-top: 0.75rem;
+      background: transparent; border: none; border-radius: 0;
+      overflow: hidden; display: flex; flex-direction: row; margin-top: 0.3rem;
+      border-top: 1px solid var(--border); padding-top: 0.5rem;
     }
     .rolled-ep-card.hidden { display: none; }
-    .rolled-ep-card__thumb { flex: 0 0 120px; position: relative; background: var(--bg2); }
-    .rolled-ep-card__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    .rolled-ep-card__thumb-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-faint); font-size: 1.6rem; }
-    .rolled-ep-card__body { flex: 1; min-width: 0; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
-    .rolled-ep-card__eyebrow { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--primary); }
-    .rolled-ep-card__title { font-size: 0.9rem; font-weight: 500; color: var(--text); line-height: 1.3; }
-    .rolled-ep-card__meta { font-size: 0.74rem; color: var(--text-faint); }
-    .rolled-ep-card__overview { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.15rem; }
-    @media (min-width: 500px) { .rolled-ep-card__thumb { flex: 0 0 160px; } }
+    .rolled-ep-card__body { flex: 1; min-width: 0; padding: 0; display: flex; flex-direction: column; gap: 0.18rem; }
+    .rolled-ep-card__eyebrow { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); }
+    .rolled-ep-card__title { font-size: 0.82rem; font-weight: 500; color: var(--text-muted); line-height: 1.3; }
+    .rolled-ep-card__meta { font-size: 0.7rem; color: var(--text-faint); }
+    .rolled-ep-card__overview { font-size: 0.76rem; color: var(--text-faint); line-height: 1.45; margin-top: 0.1rem; }
 
     .chip-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
     .chip { border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.83rem; border: 1px solid var(--border-med); cursor: pointer; background: var(--surface); color: var(--text-muted); font-weight: 500; font-family: 'DM Sans', sans-serif; transition: background var(--t), transform var(--t), box-shadow var(--t); }
@@ -323,10 +320,6 @@
         </div>
         <!-- Rolled episode info card — shown when episode was rolled -->
         <div id="rolledEpCard" class="rolled-ep-card hidden">
-          <div class="rolled-ep-card__thumb">
-            <img id="rolledEpThumb" src="" alt="" loading="lazy" />
-            <div class="rolled-ep-card__thumb-ph"><span class="material-icons">live_tv</span></div>
-          </div>
           <div class="rolled-ep-card__body">
             <div class="rolled-ep-card__eyebrow">Now playing</div>
             <div class="rolled-ep-card__title" id="rolledEpTitle"></div>
@@ -633,11 +626,10 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
   prevEpBtn.disabled = !hasPrev;
   nextEpBtn.disabled = !hasNext;
 
-  // Populate rolled episode info card
+  // Populate rolled episode info card — always shown for TV
   const epData = rolledEpData || (loadedSeasons[tvId]?.[season]||[]).find(e => e.episode_number === episode) || null;
-  if (rolledEpData && epData) {
+  if (epData) {
     rolledEpCard.classList.remove("hidden");
-    rerollRow.classList.remove("hidden");
 
     rolledEpTitle.textContent = epData.name
       ? `S${season} · E${episode} — ${epData.name}`
@@ -648,19 +640,16 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
       : "";
 
     rolledEpOverview.textContent = epData.overview || "";
+  } else {
+    rolledEpCard.classList.remove("hidden");
+    rolledEpTitle.textContent = `S${season} · E${episode}`;
+    rolledEpMeta.textContent = "";
+    rolledEpOverview.textContent = "";
+  }
 
-    const rThumbPh = rolledEpThumb.parentElement.querySelector(".rolled-ep-card__thumb-ph");
-    if (epData.still_path) {
-      rolledEpThumb.src = `https://image.tmdb.org/t/p/w300${epData.still_path}`;
-      rolledEpThumb.alt = epData.name || "";
-      rolledEpThumb.style.display = "block";
-      if (rThumbPh) rThumbPh.style.display = "none";
-    } else {
-      rolledEpThumb.src = "";
-      rolledEpThumb.style.display = "none";
-      if (rThumbPh) rThumbPh.style.display = "flex";
-    }
-
+  // Show reroll row only when episode was rolled
+  if (rolledEpData) {
+    rerollRow.classList.remove("hidden");
     // Wire reroll button — uses the roll mode that was active (show-wide or season)
     rerollBtn.onclick = async () => {
       rerollBtn.disabled = true;
@@ -674,7 +663,6 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
       rerollBtn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Reroll`;
     };
   } else {
-    rolledEpCard.classList.add("hidden");
     rerollRow.classList.add("hidden");
   }
 
@@ -835,7 +823,6 @@ function renderResults(items) {
   resultsGrid.innerHTML = "";
   emptyState.classList.add("hidden");
   if (!items?.length) {
-    resultsGrid.innerHTML = `<p style="font-size:0.84rem;color:var(--text-faint);grid-column:1/-1;">No results found.</p>`;
     return;
   }
   const frag = document.createDocumentFragment();
@@ -863,25 +850,6 @@ function renderResults(items) {
           ${year ? `<span class="card__year">${esc(year)}</span>` : ""}
         </div>
       </div>`;
-
-    // FIX: Theatrical badge uses IntersectionObserver so release_dates API calls
-    // are deferred until the card is actually visible — avoids a flood of requests
-    // for all search results simultaneously.
-    if (isMovie) {
-      const observer = new IntersectionObserver((entries, obs) => {
-        if (!entries[0].isIntersecting) return;
-        obs.disconnect();
-        getMovieReleaseStatus(item.id).then(status => {
-          if (status === "theatrical" && art.isConnected) {
-            const banner = document.createElement("span");
-            banner.className = "card__theatrical";
-            banner.textContent = "🎭 Theatrical only";
-            art.appendChild(banner);
-          }
-        });
-      }, { rootMargin: "200px" });
-      observer.observe(art);
-    }
 
     frag.appendChild(art);
   });
@@ -1064,8 +1032,16 @@ async function loadSeason(tvId, seasonNum) {
   const rollSeasonBtn = $("rollSeasonBtn");
   if (!epGrid) return;
 
-  epGrid.innerHTML = `<p class="overview">Loading…</p>`;
   if (heading) heading.textContent = `Season ${seasonNum}`;
+
+  // If already cached, render immediately — no loading state, no abort
+  if (loadedSeasons[tvId]?.[seasonNum]) {
+    renderEpisodeGrid(tvId, seasonNum, loadedSeasons[tvId][seasonNum]);
+    if (rollSeasonBtn) rollSeasonBtn.style.display = "";
+    return;
+  }
+
+  epGrid.innerHTML = `<p class="overview">Loading…</p>`;
   if (rollSeasonBtn) rollSeasonBtn.style.display = "none";
 
   // FIX: Use dedicated detailFetch controller — won't be clobbered by search
