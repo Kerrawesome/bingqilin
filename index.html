@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bingqilin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #f5ede0;
+      --bg2: #ede0cf;
+      --surface: #fdf6ec;
+      --surface2: #f7edda;
+      --primary: #c8692a;
+      --primary-dark: #a8521e;
+      --on-primary: #fff;
+      --text: #2c1a0e;
+      --text-muted: #7a5540;
+      --text-faint: #b08a72;
+      --border: rgba(80,40,10,0.10);
+      --border-med: rgba(80,40,10,0.16);
+      --radius: 16px;
+      --shadow-sm: 0 2px 8px rgba(60,30,5,0.08);
+      --shadow-md: 0 6px 20px rgba(60,30,5,0.13);
+      --t: 0.18s ease-out;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+    .app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    body, .view { scrollbar-width: none; }
+    body::-webkit-scrollbar, .view::-webkit-scrollbar { display: none; }
+
+    .top-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 1rem; background: rgba(245,237,224,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .top-bar__brand { display: flex; align-items: baseline; gap: 0.45rem; cursor: pointer; border-radius: 8px; padding: 0.1rem 0.3rem; margin: -0.1rem -0.3rem; transition: background var(--t); user-select: none; }
+    .top-bar__brand:hover { background: var(--bg2); }
+    .top-bar__name { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 600; color: var(--primary-dark); letter-spacing: -0.01em; }
+    .top-bar__sub { font-size: 0.68rem; color: var(--text-faint); }
+
+    .icon-btn { border: none; outline: none; border-radius: 999px; background: transparent; color: var(--text-muted); cursor: pointer; padding: 0.3rem; display: inline-flex; align-items: center; justify-content: center; transition: background var(--t), color var(--t), transform var(--t); }
+    .icon-btn:hover { background: var(--bg2); color: var(--text); transform: translateY(-1px); }
+    .icon-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    main.app-main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .view { display: none; padding: 0.75rem 0.9rem 1.5rem; width: 100%; max-width: 960px; margin: 0 auto; overflow-y: auto; }
+    .view--active { display: block; }
+
+    .view-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; cursor: pointer; border-radius: 10px; padding: 0.25rem 0.3rem; margin-left: -0.3rem; margin-right: -0.3rem; transition: background var(--t); user-select: none; }
+    .view-header:hover { background: var(--bg2); }
+    .view-header__titles { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; flex: 1; }
+    .view-title { margin: 0; font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .view-meta { margin: 0; font-size: 0.75rem; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .search-bar { display: flex; align-items: center; gap: 0.7rem; background: var(--surface); border-radius: 999px; padding: 0.65rem 0.95rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 0.65rem; transition: box-shadow var(--t), border-color var(--t); }
+    .search-bar:focus-within { box-shadow: var(--shadow-md); border-color: var(--border-med); }
+    .search-bar__icon { color: var(--primary); font-size: 22px; flex-shrink: 0; }
+    .search-bar__input { flex: 1; border: none; outline: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 1rem; color: var(--text); }
+    .search-bar__input::placeholder { color: var(--text-faint); }
+
+    .search-status { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.4rem; min-height: 1.2em; }
+    .search-status--error { color: #b3261e; }
+
+    .empty-state { text-align: center; padding: 3.5rem 1rem 2rem; color: var(--text-faint); user-select: none; }
+    .empty-state__icon { font-size: 3.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+    .empty-state__title { font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+    .empty-state__sub { font-size: 0.82rem; }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; }
+    @media (min-width: 720px) { .results-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); } }
+
+    .card { background: var(--surface); border-radius: var(--radius); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; border: 1px solid var(--border); transition: transform var(--t), box-shadow var(--t), background var(--t); }
+    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); background: var(--surface2); }
+    .card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .card__img-wrap { position: relative; overflow: hidden; background: var(--bg2); aspect-ratio: 2/3; }
+    .card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .card__placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-faint); font-size: 2rem; }
+    .card__body { padding: 0.45rem 0.55rem 0.55rem; }
+    .card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.3rem; margin-bottom: 0.2rem; }
+    .card__title { font-size: 0.88rem; font-weight: 500; color: var(--text); line-height: 1.3; flex: 1; min-width: 0; }
+    .card__meta { display: flex; align-items: center; justify-content: space-between; }
+    .card__chip { padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--bg2); border: 1px solid var(--border); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .card__year { font-size: 0.76rem; color: var(--text-faint); }
+    .card__ext-btn { flex-shrink: 0; width: 28px; height: 28px; border-radius: 999px; border: none; background: rgba(0,0,0,0.75); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; transition: transform var(--t), box-shadow var(--t), background var(--t); }
+    .card__ext-btn:hover { transform: translateY(-1px) scale(1.06); box-shadow: var(--shadow-sm); background: #000; }
+    .card__ext-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .detail-body { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .detail-hero { position: relative; min-height: 140px; background: var(--bg2); overflow: hidden; }
+    .detail-hero__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .detail-hero__scrim { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(20,10,4,0.72) 100%); }
+    .detail-hero__content { position: relative; display: flex; gap: 0.85rem; align-items: flex-end; padding: 1rem 0.9rem 0.9rem; }
+    .detail-hero__poster { flex: 0 0 80px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.45); border: 2px solid rgba(255,255,255,0.15); }
+    .detail-hero__poster img { width: 100%; display: block; }
+    .detail-hero__poster-ph { width: 80px; aspect-ratio: 2/3; background: var(--bg2); display: flex; align-items: center; justify-content: center; color: var(--text-faint); font-size: 1.8rem; border-radius: 10px; }
+    .detail-hero__info { flex: 1; min-width: 0; }
+    .detail-hero__title { margin: 0 0 0.2rem; font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; color: #fff; line-height: 1.25; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    .detail-hero__tagline { margin: 0 0 0.35rem; font-size: 0.78rem; color: rgba(255,255,255,0.65); font-style: italic; }
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .detail-tag { font-size: 0.68rem; font-weight: 500; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); white-space: nowrap; }
+    .detail-tag--theatrical { background: rgba(240,185,60,0.25); color: #fde8a0; border-color: rgba(240,185,60,0.4); }
+    .detail-content { padding: 0.8rem 0.9rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .detail-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); margin-bottom: 0.25rem; }
+    .overview { margin: 0; font-size: 0.84rem; line-height: 1.6; color: var(--text-muted); }
+    .detail-genres { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .genre-chip { font-size: 0.73rem; padding: 0.18rem 0.6rem; border-radius: 999px; background: var(--bg2); border: 1px solid var(--border-med); color: var(--text-muted); }
+    .detail-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    @media (min-width: 520px) { .detail-hero__poster { flex: 0 0 100px; } .detail-hero__poster-ph { width: 100px; } .detail-hero__title { font-size: 1.3rem; } }
+
+    .btn { border: none; outline: none; border-radius: 999px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; cursor: pointer; transition: transform var(--t), box-shadow var(--t), filter var(--t); white-space: nowrap; }
+    .btn--primary { background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-sm); }
+    .btn--primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); filter: brightness(1.05); }
+    .btn--primary:active { transform: translateY(0); filter: brightness(0.96); }
+    .btn--primary:focus-visible { outline: 2px solid var(--primary-dark); outline-offset: 3px; }
+    .btn--ghost { background: var(--surface2); color: var(--primary-dark); border: 1px solid var(--border-med); }
+    .btn--ghost:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); background: var(--bg2); }
+    .btn--ghost:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn--lg { padding: 0.75rem 1.5rem; font-size: 0.95rem; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+
+    .roll-strip { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); flex-wrap: wrap; }
+    .roll-strip__label { font-size: 0.78rem; color: var(--text-muted); flex: 1; min-width: 100px; }
+    .roll-strip__label strong { color: var(--text); font-weight: 500; }
+
+    .rolled-ep-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; display: flex; flex-direction: row; margin-top: 0.75rem;
+    }
+    .rolled-ep-card.hidden { display: none; }
+    .rolled-ep-card__thumb { flex: 0 0 120px; position: relative; background: var(--bg2); }
+    .rolled-ep-card__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .rolled-ep-card__thumb-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-faint); font-size: 1.6rem; }
+    .rolled-ep-card__body { flex: 1; min-width: 0; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .rolled-ep-card__eyebrow { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--primary); }
+    .rolled-ep-card__title { font-size: 0.9rem; font-weight: 500; color: var(--text); line-height: 1.3; }
+    .rolled-ep-card__meta { font-size: 0.74rem; color: var(--text-faint); }
+    .rolled-ep-card__overview { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.15rem; }
+    @media (min-width: 500px) { .rolled-ep-card__thumb { flex: 0 0 160px; } }
+
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .chip { border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.83rem; border: 1px solid var(--border-med); cursor: pointer; background: var(--surface); color: var(--text-muted); font-weight: 500; font-family: 'DM Sans', sans-serif; transition: background var(--t), transform var(--t), box-shadow var(--t); }
+    .chip:hover { background: var(--bg2); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .chip--selected { background: var(--primary); color: var(--on-primary); border-color: transparent; box-shadow: var(--shadow-sm); }
+    .chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .detail-extra { display: flex; flex-direction: column; gap: 0.35rem; }
+
+    .episodes-wrapper { margin-top: 0.4rem; }
+    .episodes-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.3rem; flex-wrap: wrap; }
+    .episodes-header .detail-section-label { margin-bottom: 0; }
+    .grid--episodes { display: grid; grid-template-columns: 1fr; gap: 0.55rem; }
+    @media (min-width: 720px) { .grid--episodes { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
+
+    .ep-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform var(--t), box-shadow var(--t), background var(--t); }
+    .ep-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); background: var(--surface2); }
+    .ep-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .ep-card--highlight { animation: ep-pulse 1.6s ease-out forwards; }
+    @keyframes ep-pulse { 0% { outline: 2px solid var(--primary); box-shadow: 0 0 0 0 rgba(200,105,42,0.45); } 60% { box-shadow: 0 0 0 12px rgba(200,105,42,0); } 100% { outline: none; box-shadow: none; } }
+    .ep-card--unaired { cursor: not-allowed; opacity: 0.45; filter: grayscale(0.4); }
+    .ep-card--unaired:hover { transform: none; box-shadow: none; background: var(--surface); }
+    .ep-card__unaired-badge { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.68rem; color: var(--text-faint); background: var(--bg2); border: 1px solid var(--border); border-radius: 999px; padding: 0.1rem 0.45rem; margin-top: 0.1rem; width: fit-content; }
+    .ep-card__img-wrap { position: relative; padding-top: 56.25%; background: var(--bg2); overflow: hidden; }
+    .ep-card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ep-card__body { padding: 0.5rem 0.6rem 0.6rem; display: flex; flex-direction: column; gap: 0.3rem; }
+    .ep-card__title { margin: 0; font-size: 0.88rem; font-weight: 500; color: var(--text); }
+    .ep-card__date { margin: 0; font-size: 0.75rem; color: var(--text-faint); }
+    .ep-card__summary { margin: 0; font-size: 0.79rem; line-height: 1.45; color: var(--text-muted); }
+    .ep-more-btn { border: none; background: none; color: var(--primary-dark); font-size: 0.76rem; font-weight: 500; cursor: pointer; padding: 0; margin-left: 0.2rem; font-family: 'DM Sans', sans-serif; }
+    .ep-more-btn:hover { text-decoration: underline; }
+    .card__theatrical { display: block; font-size: 0.65rem; font-weight: 500; color: #7a4a10; background: #fde9c5; border-top: 1px solid #f0c87a; padding: 0.2rem 0.55rem; text-align: center; letter-spacing: 0.03em; }
+
+    .player-wrap { margin-top: 0.55rem; border-radius: 14px; overflow: hidden; background: #000; position: relative; padding-top: 56.25%; box-shadow: var(--shadow-md); }
+    .player-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .player-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: rgba(255,255,255,0.45); font-size: 0.85rem; gap: 0.5rem; transition: opacity 0.3s; }
+    .player-overlay.hidden { opacity: 0; pointer-events: none; }
+    .player-overlay .material-icons { font-size: 2.5rem; opacity: 0.35; }
+
+    .ep-nav { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.55rem; }
+    .ep-nav.hidden { display: none; }
+    .ep-nav__controls { display: flex; align-items: center; gap: 0.5rem; }
+    .ep-nav__controls .ep-nav__label { flex: 1; font-size: 0.8rem; color: var(--text-muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 0.25rem; }
+    .ep-next-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; cursor: pointer;
+      display: flex; gap: 0; flex-direction: row;
+      transition: background var(--t), box-shadow var(--t), transform var(--t);
+    }
+    .ep-next-card:hover { background: var(--surface2); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .ep-next-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .ep-next-card__thumb {
+      flex: 0 0 120px; position: relative; overflow: hidden;
+      background: var(--bg2);
+    }
+    .ep-next-card__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ep-next-card__thumb-ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-faint); font-size: 1.6rem; }
+    .ep-next-card__play-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity var(--t);
+    }
+    .ep-next-card:hover .ep-next-card__play-overlay { opacity: 1; }
+    .ep-next-card__play-overlay .material-icons { font-size: 2rem; color: #fff; }
+    .ep-next-card__body { flex: 1; min-width: 0; padding: 0.55rem 0.7rem; display: flex; flex-direction: column; gap: 0.2rem; justify-content: center; }
+    .ep-next-card__eyebrow { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--primary); }
+    .ep-next-card__title { font-size: 0.88rem; font-weight: 500; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ep-next-card__meta { font-size: 0.74rem; color: var(--text-faint); }
+    .ep-next-card__overview { font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin-top: 0.1rem;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    @media (min-width: 500px) { .ep-next-card__thumb { flex: 0 0 160px; } }
+
+    .settings { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
+    .settings.hidden { display: none; }
+    .settings__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.3); }
+    .settings__panel { position: relative; width: 100%; max-width: 520px; background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: var(--shadow-md); padding: 0.8rem 1rem 1rem; animation: slideUp 0.18s ease-out; }
+    @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .settings__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+    .settings__title { margin: 0; font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 500; color: var(--text); }
+    .settings__content { display: flex; flex-direction: column; gap: 0.7rem; }
+    .settings__field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .settings__field label { font-size: 0.8rem; font-weight: 500; color: var(--text); }
+    .settings__field select { border-radius: 999px; border: 1px solid var(--border-med); padding: 0.35rem 0.75rem; font-size: 0.84rem; background: var(--surface); color: var(--text); outline: none; font-family: 'DM Sans', sans-serif; }
+    .settings__row { display: flex; align-items: center; gap: 0.5rem; }
+    .settings__row input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--primary); cursor: pointer; }
+    .settings__hint { margin: 0; font-size: 0.74rem; color: var(--text-faint); line-height: 1.4; }
+    #sandboxRow.preset-overrides { opacity: 0.5; pointer-events: none; }
+
+    .offline-banner { display: none; align-items: center; gap: 0.5rem; background: #fff3cd; border-bottom: 1px solid #f0d060; padding: 0.45rem 1rem; font-size: 0.8rem; color: #6a4a00; }
+    .offline-banner.visible { display: flex; }
+    .offline-banner .material-icons { font-size: 18px; }
+
+    .hidden { display: none !important; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div id="offlineBanner" class="offline-banner" role="alert">
+    <span class="material-icons">wifi_off</span>
+    <span>You're offline — search and images won't load, but the player may still work.</span>
+  </div>
+
+  <header class="top-bar">
+    <div class="top-bar__brand" id="topBarBrand" role="button" tabindex="0" aria-label="Go to search">
+      <span class="top-bar__name">🍦 Bingqilin</span>
+      <span class="top-bar__sub">TMDB search</span>
+    </div>
+    <button id="settingsBtn" class="icon-btn" type="button" aria-label="Settings">
+      <span class="material-icons">tune</span>
+    </button>
+  </header>
+
+  <main class="app-main">
+    <section id="viewSearch" class="view view--active" aria-label="Search">
+      <form id="searchForm" class="search-bar" role="search">
+        <span class="material-icons search-bar__icon" aria-hidden="true">search</span>
+        <input id="searchInput" type="search" class="search-bar__input"
+          placeholder="Search movies &amp; TV shows…" autocomplete="off"
+          aria-label="Search movies and TV shows" />
+        <button id="clearBtn" class="icon-btn" type="button" aria-label="Clear search">
+          <span class="material-icons" style="font-size:20px;">close</span>
+        </button>
+      </form>
+      <div id="searchStatus" class="search-status" role="status" aria-live="polite"></div>
+      <div id="resultsGrid" class="results-grid" role="list"></div>
+      <div id="emptyState" class="empty-state">
+        <div class="empty-state__icon">🎬</div>
+        <div class="empty-state__title">What are we watching?</div>
+        <div class="empty-state__sub">Search for any movie or TV show above</div>
+      </div>
+    </section>
+
+    <section id="viewDetail" class="view" aria-label="Details">
+      <header class="view-header" id="detailHeader" aria-label="Back to search">
+        <button id="backFromDetail" class="icon-btn" type="button" aria-label="Back to search" tabindex="-1">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <div class="view-header__titles">
+          <h2 id="detailTitle" class="view-title"></h2>
+          <p id="detailMeta" class="view-meta"></p>
+        </div>
+      </header>
+      <div id="detailBody" class="detail-body"></div>
+    </section>
+
+    <section id="viewPlayer" class="view" aria-label="Player">
+      <header class="view-header" id="playerHeader" aria-label="Back">
+        <button id="backFromPlayer" class="icon-btn" type="button" aria-label="Back" tabindex="-1">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <div class="view-header__titles">
+          <h2 id="playerTitle" class="view-title">Player</h2>
+          <p id="playerMeta" class="view-meta"></p>
+        </div>
+      </header>
+      <div class="player-wrap">
+        <div id="playerOverlay" class="player-overlay">
+          <span class="material-icons">smart_display</span>
+          <span>Loading player…</span>
+        </div>
+        <iframe id="playerFrame" src="" loading="lazy" allowfullscreen
+          referrerpolicy="no-referrer" title="Video player"></iframe>
+      </div>
+
+      <!-- Episode navigation — only shown for TV -->
+      <div id="epNav" class="ep-nav hidden">
+        <div class="ep-nav__controls">
+          <button id="prevEpBtn" class="btn btn--ghost" type="button" aria-label="Previous episode">
+            <span class="material-icons" style="font-size:18px;">skip_previous</span>Previous
+          </button>
+          <span id="epNavLabel" class="ep-nav__label"></span>
+          <button id="nextEpBtn" class="btn btn--ghost" type="button" aria-label="Next episode">
+            Next<span class="material-icons" style="font-size:18px;">skip_next</span>
+          </button>
+        </div>
+        <!-- Reroll button — only shown when current episode was rolled -->
+        <div id="rerollRow" class="roll-strip hidden">
+          <span class="roll-strip__label">Not feeling it?</span>
+          <button id="rerollBtn" class="btn btn--ghost" type="button">
+            <span class="material-icons" style="font-size:16px;">shuffle</span>Reroll
+          </button>
+        </div>
+        <!-- Rolled episode info card — shown when episode was rolled -->
+        <div id="rolledEpCard" class="rolled-ep-card hidden">
+          <div class="rolled-ep-card__thumb">
+            <img id="rolledEpThumb" src="" alt="" loading="lazy" />
+            <div class="rolled-ep-card__thumb-ph"><span class="material-icons">live_tv</span></div>
+          </div>
+          <div class="rolled-ep-card__body">
+            <div class="rolled-ep-card__eyebrow">Now playing</div>
+            <div class="rolled-ep-card__title" id="rolledEpTitle"></div>
+            <div class="rolled-ep-card__meta" id="rolledEpMeta"></div>
+            <div class="rolled-ep-card__overview" id="rolledEpOverview"></div>
+          </div>
+        </div>
+        <!-- Up Next card — hidden when on last episode of series -->
+        <div id="epNextCard" class="ep-next-card hidden" tabindex="0" role="button" aria-label="Play next episode">
+          <div class="ep-next-card__thumb">
+            <img id="epNextThumb" src="" alt="" loading="lazy" />
+            <div class="ep-next-card__thumb-ph"><span class="material-icons">live_tv</span></div>
+            <div class="ep-next-card__play-overlay"><span class="material-icons">play_circle</span></div>
+          </div>
+          <div class="ep-next-card__body">
+            <div class="ep-next-card__eyebrow" id="epNextEyebrow">Up next</div>
+            <div class="ep-next-card__title" id="epNextTitle"></div>
+            <div class="ep-next-card__meta" id="epNextMeta"></div>
+            <div class="ep-next-card__overview" id="epNextOverview"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="settingsSheet" class="settings hidden" role="dialog" aria-modal="true" aria-label="Settings">
+  <div id="settingsBackdrop" class="settings__backdrop"></div>
+  <div class="settings__panel">
+    <div class="settings__header">
+      <h2 class="settings__title">Settings</h2>
+      <button id="settingsClose" class="icon-btn" type="button" aria-label="Close settings">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <div class="settings__content">
+      <div class="settings__field">
+        <label for="presetSelect">Player source</label>
+        <select id="presetSelect"></select>
+      </div>
+      <div class="settings__field" id="sandboxRow">
+        <div class="settings__row">
+          <input type="checkbox" id="sandboxCheck" checked />
+          <label for="sandboxCheck">Sandbox iframe</label>
+        </div>
+        <p class="settings__hint" id="sandboxHint">Restricts the player iframe. Overridden when the active source defines its own sandbox value in presets.js.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="presets.js"></script>
+<script>
+/* ── Presets from presets.js ── */
+const API_PRESETS = Array.isArray(window.API_PRESETS) ? window.API_PRESETS : [];
+let currentPresetIndex = (typeof window.DEFAULT_PRESET_INDEX === "number") ? window.DEFAULT_PRESET_INDEX : 0;
+if (!API_PRESETS.length) console.warn("Bingqilin: presets.js loaded no presets.");
+
+/* ── TMDB ── */
+const TMDB_BASE  = "https://api.themoviedb.org/3";
+const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMTk4Ny4zMDksInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.5tY9cdg7BSCvRV7A9GaLq-AYKnok0G116wf7ISdfKyQ";
+const TMDB_HDR   = { Authorization: `Bearer ${TMDB_TOKEN}`, "Content-Type": "application/json;charset=utf-8" };
+const EXT_SEARCH = "https://predb.me/?search=";
+
+/* ── Cache & state ── */
+const cache = new Map();
+let sandboxEnabled = true;
+let currentDetail  = { mediaType: null, id: null, title: "", seasonNumbers: [] };
+// currentPlayer tracks the active player so we can restore it on back-nav
+let currentPlayer  = { mediaType: null, id: null, season: null, episode: null, label: "", extraMeta: "", url: "" };
+let loadedSeasons  = {};  // { [tvId]: { [seasonNum]: episodes[] } }
+let currentSeason  = null;
+let searchDebounce = null;
+let searchSeq      = 0;
+
+// FIX: Separate AbortControllers for search vs season/detail loading
+// so they can't accidentally cancel each other.
+let searchFetch = null;
+let detailFetch = null;
+
+/* ── DOM ── */
+const $  = id => document.getElementById(id);
+const searchForm       = $("searchForm");
+const searchInput      = $("searchInput");
+const clearBtn         = $("clearBtn");
+const searchStatus     = $("searchStatus");
+const resultsGrid      = $("resultsGrid");
+const emptyState       = $("emptyState");
+const viewSearch       = $("viewSearch");
+const viewDetail       = $("viewDetail");
+const viewPlayer       = $("viewPlayer");
+const backFromDetail   = $("backFromDetail");
+const backFromPlayer   = $("backFromPlayer");
+const detailTitle      = $("detailTitle");
+const detailMeta       = $("detailMeta");
+const detailBody       = $("detailBody");
+const playerTitle      = $("playerTitle");
+const playerMeta       = $("playerMeta");
+const playerFrame      = $("playerFrame");
+const playerOverlay    = $("playerOverlay");
+const epNav            = $("epNav");
+const epNavLabel       = $("epNavLabel");
+const prevEpBtn        = $("prevEpBtn");
+const nextEpBtn        = $("nextEpBtn");
+const rerollRow        = $("rerollRow");
+const rerollBtn        = $("rerollBtn");
+const rolledEpCard     = $("rolledEpCard");
+const rolledEpThumb    = $("rolledEpThumb");
+const rolledEpTitle    = $("rolledEpTitle");
+const rolledEpMeta     = $("rolledEpMeta");
+const rolledEpOverview = $("rolledEpOverview");
+const epNextCard       = $("epNextCard");
+const epNextThumb      = $("epNextThumb");
+const epNextEyebrow    = $("epNextEyebrow");
+const epNextTitle      = $("epNextTitle");
+const epNextMeta       = $("epNextMeta");
+const epNextOverview   = $("epNextOverview");
+const settingsBtn      = $("settingsBtn");
+const settingsSheet    = $("settingsSheet");
+const settingsBackdrop = $("settingsBackdrop");
+const settingsClose    = $("settingsClose");
+const presetSelect     = $("presetSelect");
+const sandboxCheck     = $("sandboxCheck");
+const sandboxRow       = $("sandboxRow");
+const sandboxHint      = $("sandboxHint");
+const offlineBanner    = $("offlineBanner");
+
+/* ── Offline ── */
+function updateOnline() { offlineBanner.classList.toggle("visible", !navigator.onLine); }
+window.addEventListener("online", updateOnline);
+window.addEventListener("offline", updateOnline);
+updateOnline();
+
+/* ── Helpers ── */
+function esc(s) {
+  if (typeof s !== "string") return "";
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function getYear(d) { return d ? d.split("-")[0] : ""; }
+function wordTrunc(text, n = 30) {
+  if (!text) return { short:"No summary available.", full:"No summary available.", cut:false };
+  const w = text.trim().split(/\s+/);
+  if (w.length <= n) return { short:text.trim(), full:text.trim(), cut:false };
+  return { short:w.slice(0,n).join(" ")+"…", full:text.trim(), cut:true };
+}
+function setStatus(msg, err = false) {
+  searchStatus.textContent = msg || "";
+  searchStatus.className = "search-status" + (err ? " search-status--error" : "");
+}
+function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ── Views ──
+   FIX: setView no longer unconditionally wipes the player.
+   The player src is only cleared when explicitly navigating away via goBack(),
+   not whenever ANY view switch happens. This preserves playback when returning
+   to detail and then back to player. */
+function setView(name) {
+  viewSearch.classList.toggle("view--active", name === "search");
+  viewDetail.classList.toggle("view--active", name === "detail");
+  viewPlayer.classList.toggle("view--active", name === "player");
+}
+
+/* ── Sandbox ── */
+function getActiveSandboxAttr() {
+  const preset = API_PRESETS[currentPresetIndex];
+  if (preset && typeof preset.sandbox === "string") return preset.sandbox;
+  return sandboxEnabled
+    ? "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
+    : null;
+}
+function applySandbox() {
+  const val = getActiveSandboxAttr();
+  if (!val) playerFrame.removeAttribute("sandbox");
+  else playerFrame.setAttribute("sandbox", val);
+}
+function updateSandboxUI() {
+  const preset = API_PRESETS[currentPresetIndex];
+  const overrides = preset && typeof preset.sandbox === "string";
+  sandboxRow.classList.toggle("preset-overrides", overrides);
+  sandboxHint.textContent = overrides
+    ? `This source sets its own sandbox: "${preset.sandbox||"(disabled)"}" — the checkbox above is ignored.`
+    : "Restricts the player iframe. Overridden when the active source defines its own sandbox value in presets.js.";
+}
+
+/* ── Player URL ── */
+function buildPlayerUrl({ mediaType, tmdbId, season=1, episode=1 }) {
+  if (!API_PRESETS.length) return "";
+  const p   = API_PRESETS[Math.max(0, Math.min(currentPresetIndex, API_PRESETS.length-1))];
+  const tpl = mediaType === "movie" ? p.movie_url : (p.tv_url || p.movie_url);
+  if (!tpl) return "";
+  const url = tpl
+    .replace("{tmdb}",    encodeURIComponent(tmdbId))
+    .replace("{season}",  encodeURIComponent(season))
+    .replace("{episode}", encodeURIComponent(episode));
+  if (!url.startsWith("https://")) { console.warn("Blocked non-HTTPS player URL"); return ""; }
+  return url;
+}
+
+function loadPlayer({ mediaType, id, season, episode, label, extraMeta, rolledEpData = null }) {
+  const url = buildPlayerUrl({ mediaType, tmdbId:id, season, episode });
+  applySandbox();
+
+  // FIX: Only show overlay and set src if URL actually changed, to avoid
+  // interrupting playback when navigating back to an already-playing player.
+  if (playerFrame.src !== url) {
+    playerOverlay.classList.remove("hidden");
+    playerFrame.src = url || "";
+    if (url) {
+      playerFrame.addEventListener("load", () => playerOverlay.classList.add("hidden"), { once: true });
+      setTimeout(() => playerOverlay.classList.add("hidden"), 8000);
+    }
+  }
+
+  playerTitle.textContent = label || "Player";
+  playerMeta.textContent  = extraMeta || (mediaType==="tv"&&season&&episode ? `S${season} · E${episode}` : mediaType==="movie" ? "Movie" : "");
+  setView("player");
+
+  // Store full player context including URL so we can detect real changes
+  currentPlayer = { mediaType, id, season: season||null, episode: episode||null, label: label||"", extraMeta: extraMeta||"", url };
+
+  if (mediaType === "tv" && id && season && episode) {
+    updateEpNav(id, season, episode, rolledEpData);
+  } else {
+    epNav.classList.add("hidden");
+  }
+}
+
+/* ── Back navigation ──
+   FIX: Back from player goes to detail (not search) for TV shows.
+   For movies, it goes to search. Player iframe is only torn down when
+   going all the way back to search. ── */
+function goBackFromPlayer() {
+  if (currentDetail.mediaType === "tv" && currentDetail.id) {
+    // Go back to the TV detail page — player stays alive in the background
+    setView("detail");
+  } else {
+    // Movie: go to search and clear the player
+    playerFrame.src = "";
+    playerOverlay.classList.remove("hidden");
+    epNav.classList.add("hidden");
+    setView("search");
+  }
+}
+
+function goBackFromDetail() {
+  // Leaving detail always goes to search; abort any in-flight detail/season fetches
+  if (detailFetch) { detailFetch.abort(); detailFetch = null; }
+  // Only clear player if we're not coming from a TV show (TV player might be live)
+  if (currentDetail.mediaType !== "tv") {
+    playerFrame.src = "";
+    playerOverlay.classList.remove("hidden");
+    epNav.classList.add("hidden");
+  }
+  setView("search");
+}
+
+/* ── Episode nav helpers ── */
+
+// Get flat list of all aired episodes across all loaded seasons, in order
+function getAiredEpisodeList(tvId) {
+  const seasons = currentDetail.seasonNumbers || [];
+  const list = [];
+  for (const sn of seasons) {
+    const eps = loadedSeasons[tvId]?.[sn] || [];
+    for (const ep of eps) {
+      if (hasAired(ep.air_date)) list.push({ season: sn, episode: ep.episode_number, data: ep });
+    }
+  }
+  return list;
+}
+
+// Find index of current episode in the flat list
+function findEpIndex(list, season, episode) {
+  return list.findIndex(e => e.season === season && e.episode === episode);
+}
+
+async function updateEpNav(tvId, season, episode, rolledEpData = null) {
+  epNav.classList.remove("hidden");
+
+  const allSeasons = currentDetail.seasonNumbers || [];
+
+  // Ensure current season is loaded (and adjacent seasons for seamless cross-season nav)
+  const seasonIdx  = allSeasons.indexOf(season);
+  const toFetch    = [season];
+  if (seasonIdx > 0)                      toFetch.push(allSeasons[seasonIdx - 1]);
+  if (seasonIdx < allSeasons.length - 1)  toFetch.push(allSeasons[seasonIdx + 1]);
+
+  await Promise.all(toFetch.map(sn =>
+    loadedSeasons[tvId]?.[sn] ? Promise.resolve() : fetchSeasonEps(tvId, sn).catch(() => {})
+  ));
+
+  // Get episode data for label
+  const eps = loadedSeasons[tvId]?.[season] || [];
+  const curEp = eps.find(e => e.episode_number === episode);
+  const epName = curEp?.name ? ` — ${curEp.name}` : "";
+  epNavLabel.textContent = `S${season} · E${episode}${epName}`;
+
+  const list = getAiredEpisodeList(tvId);
+  const idx  = findEpIndex(list, season, episode);
+
+  const hasPrev = idx > 0;
+  const hasNext = idx !== -1 && idx < list.length - 1;
+
+  prevEpBtn.disabled = !hasPrev;
+  nextEpBtn.disabled = !hasNext;
+
+  // Populate rolled episode info card
+  const epData = rolledEpData || (loadedSeasons[tvId]?.[season]||[]).find(e => e.episode_number === episode) || null;
+  if (rolledEpData && epData) {
+    rolledEpCard.classList.remove("hidden");
+    rerollRow.classList.remove("hidden");
+
+    rolledEpTitle.textContent = epData.name
+      ? `S${season} · E${episode} — ${epData.name}`
+      : `S${season} · E${episode}`;
+
+    rolledEpMeta.textContent = epData.air_date
+      ? new Date(epData.air_date + "T00:00:00").toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" })
+      : "";
+
+    rolledEpOverview.textContent = epData.overview || "";
+
+    const rThumbPh = rolledEpThumb.parentElement.querySelector(".rolled-ep-card__thumb-ph");
+    if (epData.still_path) {
+      rolledEpThumb.src = `https://image.tmdb.org/t/p/w300${epData.still_path}`;
+      rolledEpThumb.alt = epData.name || "";
+      rolledEpThumb.style.display = "block";
+      if (rThumbPh) rThumbPh.style.display = "none";
+    } else {
+      rolledEpThumb.src = "";
+      rolledEpThumb.style.display = "none";
+      if (rThumbPh) rThumbPh.style.display = "flex";
+    }
+
+    // Wire reroll button — uses the roll mode that was active (show-wide or season)
+    rerollBtn.onclick = async () => {
+      rerollBtn.disabled = true;
+      rerollBtn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Rolling…`;
+      if (currentPlayer._rollMode === "season") {
+        await doRollSeason(tvId, currentPlayer._rollSeason, currentDetail.title);
+      } else {
+        await doRoll(tvId, currentDetail.seasonNumbers, currentDetail.title);
+      }
+      rerollBtn.disabled = false;
+      rerollBtn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Reroll`;
+    };
+  } else {
+    rolledEpCard.classList.add("hidden");
+    rerollRow.classList.add("hidden");
+  }
+
+  // Populate "Up Next" card
+  if (hasNext) {
+    const next = list[idx + 1];
+    const nextEpData = next.data;
+    epNextCard.classList.remove("hidden");
+
+    if (next.season !== season) {
+      epNextEyebrow.textContent = `Up next · Season ${next.season}`;
+    } else {
+      epNextEyebrow.textContent = "Up next";
+    }
+
+    epNextTitle.textContent = nextEpData.name
+      ? `S${next.season} · E${next.episode} — ${nextEpData.name}`
+      : `S${next.season} · E${next.episode}`;
+
+    epNextMeta.textContent = nextEpData.air_date
+      ? new Date(nextEpData.air_date + "T00:00:00").toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" })
+      : "";
+
+    epNextOverview.textContent = nextEpData.overview || "";
+
+    const thumbPh = epNextThumb.parentElement.querySelector(".ep-next-card__thumb-ph");
+    if (nextEpData.still_path) {
+      epNextThumb.src = `https://image.tmdb.org/t/p/w300${nextEpData.still_path}`;
+      epNextThumb.alt = nextEpData.name || "";
+      epNextThumb.style.display = "block";
+      if (thumbPh) thumbPh.style.display = "none";
+    } else {
+      epNextThumb.src = "";
+      epNextThumb.style.display = "none";
+      if (thumbPh) thumbPh.style.display = "flex";
+    }
+
+    epNextCard.onclick = () => {
+      loadPlayer({
+        mediaType: "tv",
+        id: tvId,
+        season: next.season,
+        episode: next.episode,
+        label: currentDetail.title
+      });
+    };
+    epNextCard.onkeydown = e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); epNextCard.onclick(); }
+    };
+  } else {
+    epNextCard.classList.add("hidden");
+  }
+
+  prevEpBtn.onclick = () => {
+    if (idx <= 0) return;
+    const prev = list[idx - 1];
+    loadPlayer({ mediaType:"tv", id:tvId, season:prev.season, episode:prev.episode, label:currentDetail.title });
+  };
+
+  nextEpBtn.onclick = () => {
+    if (!hasNext) return;
+    const next = list[idx + 1];
+    loadPlayer({ mediaType:"tv", id:tvId, season:next.season, episode:next.episode, label:currentDetail.title });
+  };
+}
+
+/* ── TMDB fetch ── */
+async function tmdbFetch(path, params={}, signal) {
+  const key = path + JSON.stringify(params);
+  if (cache.has(key)) return cache.get(key);
+  const url = new URL(TMDB_BASE + path);
+  Object.entries(params).forEach(([k,v]) => { if (v != null && v !== "") url.searchParams.set(k,v); });
+  const res = await fetch(url.toString(), { method:"GET", headers:TMDB_HDR, signal });
+  if (!res.ok) throw new Error(`TMDB ${res.status}`);
+  const data = await res.json();
+  cache.set(key, data);
+  return data;
+}
+const tmdbSearch       = (q,s)    => tmdbFetch("/search/multi",              { query:q, include_adult:"false", language:"en-US", page:1 }, s);
+const tmdbMovie        = (id,s)   => tmdbFetch(`/movie/${id}`,               { language:"en-US" }, s);
+const tmdbTV           = (id,s)   => tmdbFetch(`/tv/${id}`,                  { language:"en-US" }, s);
+const tmdbSeason       = (id,n,s) => tmdbFetch(`/tv/${id}/season/${n}`,      { language:"en-US" }, s);
+const tmdbReleaseDates = (id,s)   => tmdbFetch(`/movie/${id}/release_dates`, {}, s);
+
+/* Returns 'theatrical' | 'home' | 'none' */
+async function getMovieReleaseStatus(movieId, signal) {
+  try {
+    const data = await tmdbReleaseDates(movieId, signal);
+    const all = (data.results||[]).flatMap(r => r.release_dates||[]);
+    if (!all.length) return "none";
+    const today = new Date().toISOString().slice(0, 10);
+    const hasHome = all.some(rd => rd.type === 4 || rd.type === 5 || rd.type === 6);
+    if (hasHome) return "home";
+    const hasPassedTheatrical = all.some(rd =>
+      (rd.type === 2 || rd.type === 3) && rd.release_date && rd.release_date.slice(0,10) <= today
+    );
+    return hasPassedTheatrical ? "theatrical" : "none";
+  } catch { return "none"; }
+}
+
+function getToday() { return new Date().toISOString().slice(0, 10); }
+function hasAired(air_date) {
+  if (!air_date) return false;
+  return air_date <= getToday();
+}
+
+/* ── Season episode fetcher (cached) ── */
+async function fetchSeasonEps(tvId, seasonNum, signal) {
+  if (loadedSeasons[tvId]?.[seasonNum]) return loadedSeasons[tvId][seasonNum];
+  const s = await tmdbSeason(tvId, seasonNum, signal);
+  const eps = s.episodes || [];
+  if (!loadedSeasons[tvId]) loadedSeasons[tvId] = {};
+  loadedSeasons[tvId][seasonNum] = eps;
+  return eps;
+}
+
+/* ── Show-wide roll — picks from all aired episodes across all seasons ── */
+async function doRoll(tvId, seasonNums, label) {
+  let pool = [];
+  for (const sn of seasonNums) {
+    try {
+      const eps = await fetchSeasonEps(tvId, sn);
+      eps.filter(e => hasAired(e.air_date)).forEach(e => pool.push({ ep:e, seasonNum:sn }));
+    } catch(e) { /* skip on error */ }
+  }
+  if (!pool.length) { setStatus("No aired episodes to roll.", true); return; }
+  const { ep, seasonNum } = randItem(pool);
+  // Tag the player context so reroll knows which mode was used
+  currentPlayer._rollMode = "show";
+  loadPlayer({
+    mediaType: "tv", id: tvId, season: seasonNum, episode: ep.episode_number, label,
+    extraMeta: `S${seasonNum} · E${ep.episode_number}${ep.name ? " — " + ep.name : ""}`,
+    rolledEpData: ep
+  });
+}
+
+/* ── NEW: Within-season roll — picks a random aired episode from one season ── */
+async function doRollSeason(tvId, seasonNum, label) {
+  let eps = [];
+  try {
+    const fetched = await fetchSeasonEps(tvId, seasonNum);
+    eps = fetched.filter(e => hasAired(e.air_date));
+  } catch(e) { /* ignore */ }
+  if (!eps.length) { setStatus("No aired episodes in this season.", true); return; }
+  const ep = randItem(eps);
+  // Tag the player context so reroll knows which mode was used
+  currentPlayer._rollMode = "season";
+  currentPlayer._rollSeason = seasonNum;
+  loadPlayer({
+    mediaType: "tv", id: tvId, season: seasonNum, episode: ep.episode_number, label,
+    extraMeta: `S${seasonNum} · E${ep.episode_number}${ep.name ? " — " + ep.name : ""}`,
+    rolledEpData: ep
+  });
+}
+
+/* ── Render results ── */
+function renderResults(items) {
+  resultsGrid.innerHTML = "";
+  emptyState.classList.add("hidden");
+  if (!items?.length) {
+    resultsGrid.innerHTML = `<p style="font-size:0.84rem;color:var(--text-faint);grid-column:1/-1;">No results found.</p>`;
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  items.filter(i => (i.media_type==="movie"||i.media_type==="tv") && i.id).forEach(item => {
+    const isMovie = item.media_type === "movie";
+    const title   = isMovie ? item.title : item.name;
+    const year    = getYear(isMovie ? item.release_date : item.first_air_date);
+    const poster  = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null;
+    const art = document.createElement("article");
+    art.className = "card"; art.setAttribute("role","listitem"); art.tabIndex = 0;
+    art.dataset.id = item.id; art.dataset.mediaType = item.media_type;
+    art.dataset.title = title||""; art.dataset.year = year;
+    art.setAttribute("aria-label", `${title||"Unknown"} (${isMovie?"Movie":"TV show"}${year?", "+year:""})`);
+    art.innerHTML = `
+      <div class="card__img-wrap">
+        ${poster ? `<img class="card__img" src="${esc(poster)}" alt="${esc(title||"")}" loading="lazy"/>` : `<div class="card__placeholder"><span class="material-icons">movie</span></div>`}
+      </div>
+      <div class="card__body">
+        <div class="card__header">
+          <span class="card__title">${esc(title||"Untitled")}</span>
+          ${isMovie ? `<button class="card__ext-btn" type="button" aria-label="External search" title="External search">🏴‍☠️</button>` : ""}
+        </div>
+        <div class="card__meta">
+          <span class="card__chip">${isMovie?"Movie":"TV"}</span>
+          ${year ? `<span class="card__year">${esc(year)}</span>` : ""}
+        </div>
+      </div>`;
+
+    // FIX: Theatrical badge uses IntersectionObserver so release_dates API calls
+    // are deferred until the card is actually visible — avoids a flood of requests
+    // for all search results simultaneously.
+    if (isMovie) {
+      const observer = new IntersectionObserver((entries, obs) => {
+        if (!entries[0].isIntersecting) return;
+        obs.disconnect();
+        getMovieReleaseStatus(item.id).then(status => {
+          if (status === "theatrical" && art.isConnected) {
+            const banner = document.createElement("span");
+            banner.className = "card__theatrical";
+            banner.textContent = "🎭 Theatrical only";
+            art.appendChild(banner);
+          }
+        });
+      }, { rootMargin: "200px" });
+      observer.observe(art);
+    }
+
+    frag.appendChild(art);
+  });
+  resultsGrid.appendChild(frag);
+}
+
+/* ── Render movie detail ── */
+function renderMovie(movie) {
+  currentDetail = { mediaType:"movie", id:movie.id, title:movie.title||movie.original_title||"", seasonNumbers:[] };
+  const title   = currentDetail.title || "Movie";
+  const year    = getYear(movie.release_date);
+  const rt      = movie.runtime > 0 ? `${movie.runtime} min` : "";
+  const rating  = movie.vote_average > 0 ? `★ ${movie.vote_average.toFixed(1)}` : "";
+  const tags    = [year, rt, rating].filter(Boolean).join(" · ");
+  detailTitle.textContent = title; detailMeta.textContent = tags;
+
+  const poster   = movie.poster_path   ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`    : null;
+  const backdrop = movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : null;
+  const genres   = (movie.genres||[]).map(g => g.name);
+  const tagline  = movie.tagline ? movie.tagline.trim() : "";
+
+  const heroTagsHtml = [year, rt, rating].filter(Boolean)
+    .map(t => `<span class="detail-tag">${esc(t)}</span>`).join("");
+
+  detailBody.innerHTML = `
+    <div class="detail-hero">
+      ${backdrop ? `<img class="detail-hero__backdrop" src="${esc(backdrop)}" alt="" aria-hidden="true" loading="lazy"/>` : ""}
+      <div class="detail-hero__scrim"></div>
+      <div class="detail-hero__content">
+        <div class="detail-hero__poster">
+          ${poster ? `<img src="${esc(poster)}" alt="${esc(title)}" loading="lazy"/>` : `<div class="detail-hero__poster-ph"><span class="material-icons">movie</span></div>`}
+        </div>
+        <div class="detail-hero__info">
+          <h2 class="detail-hero__title">${esc(title)}</h2>
+          ${tagline ? `<p class="detail-hero__tagline">${esc(tagline)}</p>` : ""}
+          <div class="detail-tags">${heroTagsHtml}</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-content">
+      ${genres.length ? `
+        <div>
+          <div class="detail-section-label">Genres</div>
+          <div class="detail-genres">${genres.map(g=>`<span class="genre-chip">${esc(g)}</span>`).join("")}</div>
+        </div>` : ""}
+      <div>
+        <div class="detail-section-label">Overview</div>
+        <p class="overview">${esc(movie.overview||"No overview available.")}</p>
+      </div>
+      <div class="detail-actions">
+        <button class="btn btn--primary btn--lg" id="playMovieBtn" type="button">
+          <span class="material-icons" style="font-size:18px;">play_arrow</span>Play movie
+        </button>
+      </div>
+    </div>`;
+
+  $("playMovieBtn").addEventListener("click", () => loadPlayer({ mediaType:"movie", id:movie.id, label:title, extraMeta:tags }));
+}
+
+/* ── Render TV detail ── */
+function renderTV(tv) {
+  loadedSeasons[tv.id] = loadedSeasons[tv.id] || {};
+  const seasons    = (tv.seasons||[]).filter(s => s.season_number > 0);
+  const seasonNums = seasons.map(s => s.season_number);
+  currentDetail = { mediaType:"tv", id:tv.id, title:tv.name||tv.original_name||"", seasonNumbers:seasonNums };
+  const title  = currentDetail.title || "TV Show";
+  const year   = getYear(tv.first_air_date);
+  const rating = tv.vote_average > 0 ? `★ ${tv.vote_average.toFixed(1)}` : "";
+  const seasonsLabel = seasons.length ? `${seasons.length} season${seasons.length>1?"s":""}` : "";
+  const tags   = [year, seasonsLabel, rating].filter(Boolean).join(" · ");
+  detailTitle.textContent = title; detailMeta.textContent = tags;
+
+  const poster   = tv.poster_path   ? `https://image.tmdb.org/t/p/w342${tv.poster_path}`    : null;
+  const backdrop = tv.backdrop_path ? `https://image.tmdb.org/t/p/w780${tv.backdrop_path}` : null;
+  const genres   = (tv.genres||[]).map(g => g.name);
+  const network  = tv.networks?.[0]?.name || "";
+
+  const heroTagsHtml = [year, seasonsLabel, rating, network].filter(Boolean)
+    .map(t => `<span class="detail-tag">${esc(t)}</span>`).join("");
+
+  detailBody.innerHTML = `
+    <div class="detail-hero">
+      ${backdrop ? `<img class="detail-hero__backdrop" src="${esc(backdrop)}" alt="" aria-hidden="true" loading="lazy"/>` : ""}
+      <div class="detail-hero__scrim"></div>
+      <div class="detail-hero__content">
+        <div class="detail-hero__poster">
+          ${poster ? `<img src="${esc(poster)}" alt="${esc(title)}" loading="lazy"/>` : `<div class="detail-hero__poster-ph"><span class="material-icons">live_tv</span></div>`}
+        </div>
+        <div class="detail-hero__info">
+          <h2 class="detail-hero__title">${esc(title)}</h2>
+          <div class="detail-tags">${heroTagsHtml}</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-content">
+      ${genres.length ? `
+        <div>
+          <div class="detail-section-label">Genres</div>
+          <div class="detail-genres">${genres.map(g=>`<span class="genre-chip">${esc(g)}</span>`).join("")}</div>
+        </div>` : ""}
+      <div>
+        <div class="detail-section-label">Overview</div>
+        <p class="overview">${esc(tv.overview||"No overview available.")}</p>
+      </div>
+      <div class="roll-strip">
+        <span class="roll-strip__label">🎲 <strong>Surprise me</strong> — random episode from the whole show</span>
+        <button class="btn btn--ghost" id="rollShowBtn" type="button">
+          <span class="material-icons" style="font-size:16px;">shuffle</span>Roll
+        </button>
+      </div>
+      <div class="detail-extra">
+        <div class="detail-section-label">Seasons</div>
+        <div id="seasonChips" class="chip-grid" style="margin-bottom:0.6rem;">
+          ${seasons.map(s=>`<button class="chip" type="button" data-sn="${s.season_number}" aria-pressed="false">S${s.season_number}</button>`).join("")}
+          ${!seasons.length ? `<p class="overview">No season data.</p>` : ""}
+        </div>
+        <div class="episodes-header">
+          <div class="detail-section-label" id="epsHeading" style="margin-bottom:0;">Episodes</div>
+          <!-- NEW: within-season roll button, shown once a season is loaded -->
+          <button class="btn btn--ghost" id="rollSeasonBtn" type="button" style="display:none;">
+            <span class="material-icons" style="font-size:16px;">shuffle</span>Roll season
+          </button>
+        </div>
+        <div id="episodeGrid" class="grid--episodes" style="margin-top:0.4rem;"></div>
+      </div>
+    </div>`;
+
+  const chips = detailBody.querySelectorAll(".chip[data-sn]");
+  chips.forEach(chip => {
+    chip.addEventListener("click", async () => {
+      chips.forEach(c => { c.classList.remove("chip--selected"); c.setAttribute("aria-pressed","false"); });
+      chip.classList.add("chip--selected"); chip.setAttribute("aria-pressed","true");
+      await switchToSeason(tv.id, Number(chip.dataset.sn));
+    });
+  });
+
+  if (chips.length > 0) {
+    chips[0].classList.add("chip--selected"); chips[0].setAttribute("aria-pressed","true");
+    switchToSeason(tv.id, Number(chips[0].dataset.sn));
+  }
+
+  $("rollShowBtn").addEventListener("click", async () => {
+    if (!seasonNums.length) return;
+    const btn = $("rollShowBtn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Rolling…`;
+    await doRoll(tv.id, seasonNums, title);
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Roll`;
+  });
+
+  // NEW: within-season roll — wired after seasons load in switchToSeason
+  const rollSeasonBtn = $("rollSeasonBtn");
+  rollSeasonBtn.addEventListener("click", async () => {
+    if (!currentSeason) return;
+    rollSeasonBtn.disabled = true;
+    rollSeasonBtn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Rolling…`;
+    await doRollSeason(tv.id, currentSeason, title);
+    rollSeasonBtn.disabled = false;
+    rollSeasonBtn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Roll season`;
+  });
+}
+
+/* ── Switch to a season ── */
+async function switchToSeason(tvId, seasonNum) {
+  const chips = detailBody.querySelectorAll(".chip[data-sn]");
+  chips.forEach(c => {
+    const selected = Number(c.dataset.sn) === seasonNum;
+    c.classList.toggle("chip--selected", selected);
+    c.setAttribute("aria-pressed", String(selected));
+  });
+  currentSeason = seasonNum;
+  await loadSeason(tvId, seasonNum);
+}
+
+/* ── Load season episodes ── */
+async function loadSeason(tvId, seasonNum) {
+  const epGrid  = $("episodeGrid");
+  const heading = $("epsHeading");
+  const rollSeasonBtn = $("rollSeasonBtn");
+  if (!epGrid) return;
+
+  epGrid.innerHTML = `<p class="overview">Loading…</p>`;
+  if (heading) heading.textContent = `Season ${seasonNum}`;
+  if (rollSeasonBtn) rollSeasonBtn.style.display = "none";
+
+  // FIX: Use dedicated detailFetch controller — won't be clobbered by search
+  if (detailFetch) detailFetch.abort();
+  detailFetch = new AbortController();
+
+  let season;
+  try {
+    season = await tmdbSeason(tvId, seasonNum, detailFetch.signal);
+  } catch(err) {
+    if (err.name === "AbortError") return;
+    epGrid.innerHTML = `<p class="overview" style="color:#b3261e;">Could not load episodes.</p>`;
+    return;
+  }
+
+  const eps = season.episodes || [];
+  if (!loadedSeasons[tvId]) loadedSeasons[tvId] = {};
+  loadedSeasons[tvId][seasonNum] = eps;
+
+  if (!eps.length) { epGrid.innerHTML = `<p class="overview">No episodes found.</p>`; return; }
+
+  renderEpisodeGrid(tvId, seasonNum, eps);
+
+  // Show the roll-season button now that we have episodes
+  if (rollSeasonBtn) rollSeasonBtn.style.display = "";
+}
+
+/* ── Render episode grid ── */
+function renderEpisodeGrid(tvId, seasonNum, eps) {
+  const epGrid = $("episodeGrid");
+  if (!epGrid) return;
+  const frag = document.createDocumentFragment();
+
+  eps.forEach(ep => {
+    const aired = hasAired(ep.air_date);
+    const { short, full, cut } = wordTrunc(ep.overview, 30);
+    const still = ep.still_path ? `https://image.tmdb.org/t/p/w780${ep.still_path}` : null;
+    const card  = document.createElement("article");
+    card.className = "ep-card" + (aired ? "" : " ep-card--unaired");
+    card.tabIndex  = aired ? 0 : -1;
+    card.id        = `ep-${ep.episode_number}`;
+    card.dataset.tvId   = tvId;
+    card.dataset.season = seasonNum;
+    card.dataset.ep     = ep.episode_number;
+    card.dataset.aired  = aired ? "1" : "0";
+    card.setAttribute("aria-label", `S${seasonNum} E${ep.episode_number}${ep.name?" — "+ep.name:""}${aired?"":" (not yet aired)"}`);
+    card.setAttribute("aria-disabled", aired ? "false" : "true");
+
+    let airLabel = "";
+    if (ep.air_date) {
+      if (aired) {
+        airLabel = ep.air_date;
+      } else {
+        const d = new Date(ep.air_date + "T00:00:00");
+        airLabel = `Airs ${d.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" })}`;
+      }
+    }
+
+    card.innerHTML = `
+      <div class="ep-card__img-wrap">
+        ${still
+          ? `<img class="ep-card__img" src="${esc(still)}" alt="${esc(ep.name||"")}" loading="lazy"/>`
+          : `<div class="card__placeholder" style="position:absolute;inset:0;"><span class="material-icons">live_tv</span></div>`}
+      </div>
+      <div class="ep-card__body">
+        <h4 class="ep-card__title">S${seasonNum} · E${ep.episode_number}${ep.name?" — "+esc(ep.name):""}</h4>
+        ${airLabel ? `<p class="ep-card__date">${esc(airLabel)}</p>` : ""}
+        ${!aired ? `<span class="ep-card__unaired-badge"><span class="material-icons" style="font-size:12px;">schedule</span>Not yet aired</span>` : ""}
+        <p class="ep-card__summary">
+          <span class="ep-sum-text">${aired ? esc(short) : ""}</span>
+          ${aired && cut ? `<button class="ep-more-btn" type="button" aria-expanded="false">More</button>` : ""}
+        </p>
+      </div>`;
+
+    if (aired) {
+      card.addEventListener("click", e => {
+        if (e.target.closest(".ep-more-btn")) return;
+        loadPlayer({ mediaType:"tv", id:Number(card.dataset.tvId), season:Number(card.dataset.season), episode:Number(card.dataset.ep), label:currentDetail.title });
+      });
+      card.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); card.click(); } });
+
+      const moreBtn = card.querySelector(".ep-more-btn");
+      if (moreBtn) {
+        const span = card.querySelector(".ep-sum-text");
+        moreBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          const expanded = moreBtn.getAttribute("aria-expanded") === "true";
+          span.textContent = expanded ? short : full;
+          moreBtn.textContent = expanded ? "More" : "Less";
+          moreBtn.setAttribute("aria-expanded", String(!expanded));
+        });
+      }
+    }
+
+    frag.appendChild(card);
+  });
+
+  epGrid.innerHTML = "";
+  epGrid.appendChild(frag);
+}
+
+/* ── Highlight a rolled episode card ── */
+function highlightEp(epNum) {
+  const card = $(`ep-${epNum}`);
+  if (!card) return;
+  card.classList.remove("ep-card--highlight");
+  void card.offsetWidth;
+  card.classList.add("ep-card--highlight");
+  card.scrollIntoView({ behavior:"smooth", block:"start" });
+  setTimeout(() => card.classList.remove("ep-card--highlight"), 1800);
+}
+
+/* ── Search ── */
+async function doSearch(query) {
+  if (!query) { resultsGrid.innerHTML=""; emptyState.classList.remove("hidden"); setStatus(""); return; }
+  emptyState.classList.add("hidden");
+  const seq = ++searchSeq;
+  setStatus("Searching…");
+  resultsGrid.innerHTML = "";
+  // FIX: Use dedicated searchFetch — separate from detailFetch
+  if (searchFetch) searchFetch.abort();
+  searchFetch = new AbortController();
+  try {
+    const data = await tmdbSearch(query, searchFetch.signal);
+    if (seq !== searchSeq) return;
+    renderResults(data.results||[]);
+    setStatus(data.results?.length ? "" : "No results.");
+    searchInput.focus({ preventScroll:true });
+  } catch(err) {
+    if (err.name==="AbortError"||seq!==searchSeq) return;
+    setStatus("Could not reach TMDB. Check your connection.", true);
+  }
+}
+
+/* ── Card click handler ── */
+async function handleCardClick(e) {
+  const extBtn = e.target.closest(".card__ext-btn");
+  if (extBtn) {
+    e.stopPropagation();
+    const art = extBtn.closest(".card");
+    const q = `${art.dataset.title||""} ${art.dataset.year||""}`.trim();
+    if (q && EXT_SEARCH) window.open(EXT_SEARCH+encodeURIComponent(q),"_blank","noopener");
+    return;
+  }
+  const card = e.target.closest(".card");
+  if (!card) return;
+  const id = Number(card.dataset.id), mt = card.dataset.mediaType;
+  if (!id||!mt) return;
+  detailTitle.textContent="Loading…"; detailMeta.textContent=""; detailBody.innerHTML="";
+  setView("detail");
+  // FIX: Use dedicated detailFetch — won't cancel a running search
+  if (detailFetch) detailFetch.abort();
+  detailFetch = new AbortController();
+  try {
+    if (mt==="movie") renderMovie(await tmdbMovie(id, detailFetch.signal));
+    else              renderTV(await tmdbTV(id, detailFetch.signal));
+  } catch(err) {
+    if (err.name==="AbortError") return;
+    detailTitle.textContent="Error loading details";
+    detailBody.innerHTML=`<p class="overview" style="color:#b3261e;">Could not fetch from TMDB.</p>`;
+  }
+}
+resultsGrid.addEventListener("click", handleCardClick);
+// FIX: keydown handler checks for ext button to avoid double-triggering
+resultsGrid.addEventListener("keydown", e => {
+  if (e.key==="Enter"||e.key===" ") {
+    // If focus is on the ext button, let its own click handler deal with it
+    if (e.target.closest(".card__ext-btn")) { e.preventDefault(); e.target.click(); return; }
+    const c = e.target.closest(".card");
+    if (c) { e.preventDefault(); handleCardClick({ target: c }); }
+  }
+});
+
+/* ── Navigation ── */
+const topBarBrand  = $("topBarBrand");
+const detailHeader = $("detailHeader");
+const playerHeader = $("playerHeader");
+
+topBarBrand.addEventListener("click", () => {
+  // Going home from player: clear player state
+  if (viewPlayer.classList.contains("view--active")) {
+    playerFrame.src = "";
+    playerOverlay.classList.remove("hidden");
+    epNav.classList.add("hidden");
+  }
+  setView("search");
+});
+topBarBrand.addEventListener("keydown", e => {
+  if (e.key==="Enter"||e.key===" ") { e.preventDefault(); topBarBrand.click(); }
+});
+
+detailHeader.addEventListener("click", goBackFromDetail);
+detailHeader.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); goBackFromDetail(); } });
+
+// FIX: Back from player goes to detail for TV, search for movies
+playerHeader.addEventListener("click", goBackFromPlayer);
+playerHeader.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); goBackFromPlayer(); } });
+
+/* ── Settings ── */
+function openSettings()  { settingsSheet.classList.remove("hidden"); settingsSheet.removeAttribute("aria-hidden"); setTimeout(()=>settingsClose.focus(),50); }
+function closeSettings() { settingsSheet.classList.add("hidden"); settingsSheet.setAttribute("aria-hidden","true"); settingsBtn.focus(); }
+settingsBtn.addEventListener("click", openSettings);
+settingsClose.addEventListener("click", closeSettings);
+settingsBackdrop.addEventListener("click", closeSettings);
+settingsSheet.addEventListener("keydown", e => {
+  if (e.key==="Escape") { closeSettings(); return; }
+  if (e.key==="Tab") {
+    const f=[...settingsSheet.querySelectorAll("button,select,input,[tabindex]:not([tabindex='-1'])")];
+    if (!f.length) return;
+    if (e.shiftKey&&document.activeElement===f[0]) { e.preventDefault(); f[f.length-1].focus(); }
+    else if (!e.shiftKey&&document.activeElement===f[f.length-1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+
+function initPresets() {
+  presetSelect.innerHTML = "";
+  if (!API_PRESETS.length) {
+    const o = document.createElement("option");
+    o.textContent = "No presets — check presets.js";
+    presetSelect.appendChild(o); presetSelect.disabled = true; return;
+  }
+  API_PRESETS.forEach((p,i) => {
+    const o = document.createElement("option"); o.value=i; o.textContent=p.name||`Preset ${i+1}`; presetSelect.appendChild(o);
+  });
+  presetSelect.value = currentPresetIndex;
+  presetSelect.addEventListener("change", () => { currentPresetIndex=Number(presetSelect.value)||0; updateSandboxUI(); applySandbox(); });
+}
+
+sandboxCheck.checked = true;
+sandboxEnabled = true;
+sandboxCheck.addEventListener("change", () => { sandboxEnabled = sandboxCheck.checked; });
+
+/* ── Search wiring ── */
+searchForm.addEventListener("submit", e => { e.preventDefault(); doSearch(searchInput.value.trim()); });
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchDebounce);
+  const q = searchInput.value.trim();
+  if (!q) { resultsGrid.innerHTML=""; emptyState.classList.remove("hidden"); setStatus(""); return; }
+  searchDebounce = setTimeout(()=>doSearch(q), 220);
+});
+clearBtn.addEventListener("click", () => { searchInput.value=""; resultsGrid.innerHTML=""; emptyState.classList.remove("hidden"); setStatus(""); searchInput.focus(); });
+
+/* ── Init ── */
+initPresets();
+updateSandboxUI();
+applySandbox();
+</script>
+</body>
+</html>
