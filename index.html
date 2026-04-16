@@ -438,9 +438,14 @@
     <div class="settings__section">
       <div class="settings__section-label">Player sources</div>
       <div id="sourceList" class="source-list"></div>
-      <button id="addSourceBtn" class="btn btn--ghost btn--sm" type="button" style="align-self:flex-start;margin-top:0.2rem;">
-        <span class="material-icons" style="font-size:16px;">add</span>Add source
-      </button>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.2rem;">
+        <button id="addSourceBtn" class="btn btn--ghost btn--sm" type="button">
+          <span class="material-icons" style="font-size:16px;">add</span>Add source
+        </button>
+        <button id="restoreDefaultsBtn" class="btn btn--ghost btn--sm" type="button">
+          <span class="material-icons" style="font-size:16px;">restore</span>Restore defaults
+        </button>
+      </div>
       <div id="sourceForm" class="source-form hidden">
         <p class="source-form__title" id="sourceFormTitle">Add source</p>
         <div>
@@ -469,16 +474,6 @@
       </div>
     </div>
 
-    <!-- Player options -->
-    <div class="settings__section">
-      <div class="settings__section-label">Player</div>
-      <div class="settings__row">
-        <input type="checkbox" id="restrictCheck" checked />
-        <label for="restrictCheck">Restrict player iframe</label>
-      </div>
-      <p class="settings__hint">Prevents the player from accessing your camera, microphone, or opening pop-ups. Overridden by source-specific sandbox settings.</p>
-    </div>
-
     <!-- History -->
     <div class="settings__section">
       <div class="settings__section-label">Watch history</div>
@@ -492,8 +487,6 @@
 <script>
 /* ═══════════════════════════════════════════════════════
    SOURCES
-   Default sources hardcoded in JS — no presets.js needed.
-   User edits persist to localStorage under "bq_sources".
 ═══════════════════════════════════════════════════════ */
 const DEFAULT_SOURCES = [
   { name: "vidsrc.cc",        movie_url: "https://vidsrc.cc/v2/embed/movie/{tmdb}",                                                       tv_url: "https://vidsrc.cc/v2/embed/tv/{tmdb}/{season}/{episode}",                                                sandbox: "allow-scripts allow-same-origin" },
@@ -512,10 +505,6 @@ function setActiveSource(i) { activeSourceIdx = i; try { localStorage.setItem("b
 
 /* ═══════════════════════════════════════════════════════
    WATCH HISTORY
-   Schema per key "bq_hist:tv:1396" or "bq_hist:movie:550":
-   { mediaType, id, title, episodes:[{season,episode,watchedAt}] }
-   episodes array — up to 500 per show, newest first.
-   Movies: { mediaType:"movie", id, title, watchedAt }
 ═══════════════════════════════════════════════════════ */
 const HIST_PFX = "bq_hist:";
 
@@ -528,7 +517,6 @@ function histSave(mt, id, title, season, episode) {
     } else {
       let entry = histGet(mt, id) || { mediaType: mt, id, title, episodes: [] };
       entry.title = title;
-      // Remove existing record for this episode then prepend
       entry.episodes = entry.episodes.filter(e => !(e.season === season && e.episode === episode));
       entry.episodes.unshift({ season, episode, watchedAt: Date.now() });
       if (entry.episodes.length > 500) entry.episodes = entry.episodes.slice(0, 500);
@@ -542,7 +530,6 @@ function histGet(mt, id) {
 }
 
 function histGetWatchedEps(tvId) {
-  // Returns Set of "season:episode" strings
   const e = histGet("tv", tvId);
   if (!e?.episodes) return new Set();
   return new Set(e.episodes.map(ep => `${ep.season}:${ep.episode}`));
@@ -606,7 +593,6 @@ let searchDebounce  = null;
 let searchSeq       = 0;
 let searchFetch     = null;
 let detailFetch     = null;
-let restrictPlayer  = true;
 
 /* ═══════════════════════════════════════════════════════
    DOM
@@ -654,6 +640,7 @@ const settingsBackdrop = $("settingsBackdrop");
 const settingsClose    = $("settingsClose");
 const sourceListEl     = $("sourceList");
 const addSourceBtn     = $("addSourceBtn");
+const restoreDefaultsBtn = $("restoreDefaultsBtn");
 const sourceForm       = $("sourceForm");
 const sourceFormTitle  = $("sourceFormTitle");
 const sfName           = $("sfName");
@@ -662,7 +649,6 @@ const sfTvUrl          = $("sfTvUrl");
 const sfSandbox        = $("sfSandbox");
 const sfCancel         = $("sfCancel");
 const sfSave           = $("sfSave");
-const restrictCheck    = $("restrictCheck");
 const clearHistoryBtn  = $("clearHistoryBtn");
 const offlineBanner    = $("offlineBanner");
 
@@ -778,9 +764,9 @@ function applySandbox() {
   const src = SOURCES[Math.max(0, Math.min(activeSourceIdx, SOURCES.length - 1))];
   let val;
   if (src && typeof src.sandbox === "string") {
-    val = src.sandbox; // source-specific (may be empty string = no sandbox)
+    val = src.sandbox;
   } else {
-    val = restrictPlayer ? "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation" : null;
+    val = "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation";
   }
   if (val == null || val === "") playerFrame.removeAttribute("sandbox");
   else playerFrame.setAttribute("sandbox", val);
@@ -802,7 +788,6 @@ function loadPlayer({ mediaType, id, season, episode, label, extraMeta, rolledEp
     }
   }
 
-  // Resolve episode name once here for both playerTitle and history
   const epData = rolledEpData || (season && episode && loadedSeasons[id]?.[season]?.find(e => e.episode_number === episode)) || null;
   const epName = epData?.name || null;
 
@@ -819,13 +804,10 @@ function loadPlayer({ mediaType, id, season, episode, label, extraMeta, rolledEp
     backFromPlayer.setAttribute("aria-label", "Back to search");
   }
 
-  // Set currentPlayer BEFORE pushPlayerHash
   currentPlayer = { mediaType, id, season: season || null, episode: episode || null, label: label || "", url, rollMode, rollSeason };
 
-  // Save history
   histSave(mediaType, id, label || currentDetail.title || "", season, episode);
 
-  // Refresh watched badge on episode card if visible
   if (mediaType === "tv" && season && episode) {
     const card = document.getElementById(`ep-${episode}`);
     if (card && Number(card.dataset.season) === season) markEpWatched(card);
@@ -908,7 +890,6 @@ async function updateEpNav(tvId, season, episode, rolledEpData, rollMode, rollSe
   prevEpBtn.disabled = !hasPrev;
   nextEpBtn.disabled = !hasNext;
 
-  // Now playing card — shown when rolled
   if (rolledEpData) {
     nowPlayingCard.classList.remove("hidden");
     nowPlayingTitle.textContent = rolledEpData.name
@@ -930,7 +911,6 @@ async function updateEpNav(tvId, season, episode, rolledEpData, rollMode, rollSe
   prevEpBtn.onclick = () => { if (idx <= 0) return; const p = list[idx-1]; loadPlayer({ mediaType:"tv", id:tvId, season:p.season, episode:p.episode, label:currentDetail.title }); };
   nextEpBtn.onclick = () => { if (!hasNext) return; const n = list[idx+1]; loadPlayer({ mediaType:"tv", id:tvId, season:n.season, episode:n.episode, label:currentDetail.title }); };
 
-  // Up next card
   if (hasNext) {
     const next = list[idx+1]; const nd = next.data;
     epNextCard.classList.remove("hidden");
@@ -942,7 +922,6 @@ async function updateEpNav(tvId, season, episode, rolledEpData, rollMode, rollSe
     if (nd.still_path) {
       epNextThumb.src = `https://image.tmdb.org/t/p/w300${nd.still_path}`; epNextThumb.alt = nd.name||""; epNextThumb.style.display="block";
       if (ph) ph.style.display="none";
-      // Preload
       new Image().src = `https://image.tmdb.org/t/p/w300${nd.still_path}`;
     } else {
       epNextThumb.src=""; epNextThumb.style.display="none"; if (ph) ph.style.display="flex";
@@ -1026,7 +1005,6 @@ function renderResults(items) {
     if (poster) { const img = document.createElement("img"); img.className="card__img"; img.src=poster; img.alt=title||""; img.loading="lazy"; imgWrap.appendChild(img); }
     else { const ph = document.createElement("div"); ph.className="card__placeholder"; ph.innerHTML=`<span class="material-icons">movie</span>`; imgWrap.appendChild(ph); }
 
-    // External search button — hover overlay on poster
     const extBtn = document.createElement("button");
     extBtn.className = "card__ext-btn"; extBtn.type = "button";
     extBtn.setAttribute("aria-label", "Search externally"); extBtn.title = "Search on predb.me";
@@ -1061,15 +1039,14 @@ function renderMovie(movie) {
   const title   = currentDetail.title || "Movie";
   const year    = getYear(movie.release_date);
   const rt      = movie.runtime > 0 ? `${movie.runtime} min` : "";
-  const rating  = movie.vote_average > 0 ? `★ ${movie.vote_average.toFixed(1)}` : "";
-  const tags    = [year, rt, rating].filter(Boolean).join(" · ");
+  const tags    = [year, rt].filter(Boolean).join(" · ");
   detailTitle.textContent = title; detailMeta.textContent = tags;
 
   const poster   = movie.poster_path   ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`   : null;
   const backdrop = movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : null;
   const genres   = (movie.genres||[]).map(g => g.name);
   const tagline  = movie.tagline?.trim() || "";
-  const tagsHtml = [year, rt, rating].filter(Boolean).map(t => `<span class="play-hero__tag">${esc(t)}</span>`).join("");
+  const tagsHtml = [year, rt].filter(Boolean).map(t => `<span class="play-hero__tag">${esc(t)}</span>`).join("");
   const hist     = histGet("movie", movie.id);
 
   detailBody.innerHTML = `
@@ -1107,26 +1084,23 @@ function renderTV(tv) {
   currentDetail    = { mediaType:"tv", id:tv.id, title:tv.name||tv.original_name||"", seasonNumbers:seasonNums };
   const title      = currentDetail.title || "TV Show";
   const year       = getYear(tv.first_air_date);
-  const rating     = tv.vote_average > 0 ? `★ ${tv.vote_average.toFixed(1)}` : "";
   const seasonsLabel = seasons.length ? `${seasons.length} season${seasons.length>1?"s":""}` : "";
-  const tags       = [year, seasonsLabel, rating].filter(Boolean).join(" · ");
+  const tags       = [year, seasonsLabel].filter(Boolean).join(" · ");
   detailTitle.textContent = title; detailMeta.textContent = tags;
 
   const poster   = tv.poster_path   ? `https://image.tmdb.org/t/p/w342${tv.poster_path}`   : null;
   const backdrop = tv.backdrop_path ? `https://image.tmdb.org/t/p/w780${tv.backdrop_path}` : null;
   const genres   = (tv.genres||[]).map(g => g.name);
   const network  = tv.networks?.[0]?.name || "";
-  const tagsHtml = [year, seasonsLabel, rating, network].filter(Boolean).map(t => `<span class="detail-tag">${esc(t)}</span>`).join("");
+  const tagsHtml = [year, seasonsLabel, network].filter(Boolean).map(t => `<span class="detail-tag">${esc(t)}</span>`).join("");
 
-  // History
   const lastEp   = histLastEp(tv.id);
   const watchedEps = histGetWatchedEps(tv.id);
 
-  // Season chip labels with episode counts and progress dots
+  // Season chips — just "S1", "S2" etc, no episode count
   const chipsHtml = seasons.map(s => {
-    const epCount = s.episode_count ? ` · ${s.episode_count}ep` : "";
     const hasProgress = [...watchedEps].some(k => k.startsWith(`${s.season_number}:`));
-    return `<button class="chip${hasProgress?" chip--has-progress":""}" type="button" data-sn="${s.season_number}" aria-pressed="false" title="Season ${s.season_number}${epCount}">S${s.season_number}${epCount}</button>`;
+    return `<button class="chip${hasProgress?" chip--has-progress":""}" type="button" data-sn="${s.season_number}" aria-pressed="false">S${s.season_number}</button>`;
   }).join("");
 
   detailBody.innerHTML = `
@@ -1172,7 +1146,6 @@ function renderTV(tv) {
       </div>
     </div>`;
 
-  // Wire chips
   const chips = detailBody.querySelectorAll(".chip[data-sn]");
   chips.forEach(chip => {
     chip.addEventListener("click", async () => {
@@ -1340,7 +1313,7 @@ resultsGrid.addEventListener("keydown", e => {
 ═══════════════════════════════════════════════════════ */
 const topBarBrand = $("topBarBrand");
 topBarBrand.addEventListener("click", () => {
-  if (viewSearch.classList.contains("view--active")) return; // already home
+  if (viewSearch.classList.contains("view--active")) return;
   clearTimeout(searchDebounce);
   if (currentPlayer.mediaType === "movie") { playerFrame.src=""; playerOverlay.classList.remove("hidden"); epNav.classList.add("hidden"); }
   history.pushState(null,"",location.pathname); setView("search");
@@ -1370,7 +1343,7 @@ document.addEventListener("keydown", e => {
 /* ═══════════════════════════════════════════════════════
    SETTINGS — SOURCES UI
 ═══════════════════════════════════════════════════════ */
-let editingSourceIdx = -1; // -1 = adding new
+let editingSourceIdx = -1;
 
 function renderSourceList() {
   sourceListEl.innerHTML = "";
@@ -1399,7 +1372,6 @@ function renderSourceList() {
   });
 }
 
-// Delegated listener on settings panel for source card actions
 settingsSheet.addEventListener("click", e => {
   const btn = e.target.closest(".source-card__btn"); if (!btn||!btn.dataset.action) return;
   const action=btn.dataset.action, idx=Number(btn.dataset.idx);
@@ -1420,19 +1392,25 @@ sfSave.addEventListener("click", () => {
   sourcesSave(SOURCES); renderSourceList(); sourceForm.classList.add("hidden"); addSourceBtn.classList.remove("hidden");
 });
 
-/* ── Restrict player checkbox ── */
-restrictCheck.checked = restrictPlayer;
-restrictCheck.addEventListener("change", () => { restrictPlayer = restrictCheck.checked; applySandbox(); });
+/* Restore defaults */
+restoreDefaultsBtn.addEventListener("click", () => {
+  if (!confirm("Reset sources to defaults? Your custom sources will be removed.")) return;
+  SOURCES = DEFAULT_SOURCES.map(s => ({ ...s }));
+  sourcesSave(SOURCES);
+  setActiveSource(0);
+  applySandbox();
+  renderSourceList();
+  sourceForm.classList.add("hidden");
+  addSourceBtn.classList.remove("hidden");
+});
 
 /* ── Clear history ── */
 clearHistoryBtn.addEventListener("click", () => {
   if (!confirm("Clear all watch history?")) return;
   histClearAll();
-  // Remove watched ticks from visible episode cards
   document.querySelectorAll(".ep-card--watched").forEach(c => {
     c.classList.remove("ep-card--watched"); c.querySelector(".ep-watched-tick")?.remove();
   });
-  // Re-render detail if it's a TV show (to remove history strip / resume button)
   if (currentDetail.mediaType === "tv" && currentDetail.id) {
     const hs = $("historyStrip"); if (hs) hs.remove();
     const rb = $("resumeBtn"); if (rb) rb.closest(".history-strip")?.remove();
