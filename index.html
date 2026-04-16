@@ -45,7 +45,7 @@
     body, .view { scrollbar-width: none; }
     body::-webkit-scrollbar, .view::-webkit-scrollbar { display: none; }
 
-    .top-bar { padding-top: calc(0.55rem + env(safe-area-inset-top)); position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 1rem; background: rgba(245,237,224,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .top-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 1rem; background: rgba(245,237,224,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding-top: calc(0.55rem + env(safe-area-inset-top)); }
     .top-bar__brand { display: flex; align-items: baseline; gap: 0.45rem; cursor: pointer; border-radius: 8px; padding: 0.1rem 0.3rem; margin: -0.1rem -0.3rem; transition: background var(--t); user-select: none; }
     .top-bar__brand:hover { background: var(--bg2); }
     .top-bar__name { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 600; color: var(--primary-dark); letter-spacing: -0.01em; }
