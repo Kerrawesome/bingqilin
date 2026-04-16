@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <title>Bingqilin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#c8692a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Bingqilin" />
+  <link rel="apple-touch-icon" href="https://em-content.zobj.net/source/microsoft-teams/400/soft-ice-cream_1f366.png" />
+  <meta name="description" content="Search and watch movies &amp; TV shows" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -223,12 +233,42 @@
     .settings__hint { margin: 0; font-size: 0.74rem; color: var(--text-faint); line-height: 1.4; }
     #sandboxRow.preset-overrides { opacity: 0.5; pointer-events: none; }
 
+    .offline-banner { display: none; align-items: center; gap: 0.5rem; background: #fff3cd; border-bottom: 1px solid #f0d060; padding: 0.45rem 1rem; font-size: 0.8rem; color: #6a4a00; }
+    .offline-banner.visible { display: flex; }
+    .offline-banner .material-icons { font-size: 18px; }
+
+    .install-banner { display: none; align-items: center; gap: 0.6rem; background: var(--surface); border-bottom: 1px solid var(--border-med); padding: 0.5rem 1rem; font-size: 0.82rem; color: var(--text); flex-wrap: wrap; }
+    .install-banner.visible { display: flex; }
+    .install-banner__icon { font-size: 1.3rem; flex-shrink: 0; }
+    .install-banner__text { flex: 1; min-width: 120px; color: var(--text-muted); }
+    .install-banner__text strong { color: var(--text); }
+    .install-banner__actions { display: flex; gap: 0.4rem; align-items: center; }
+    .install-banner__btn { border: none; border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.8rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: filter var(--t); }
+    .install-banner__btn--primary { background: var(--primary); color: #fff; }
+    .install-banner__btn--primary:hover { filter: brightness(1.07); }
+    .install-banner__btn--ghost { background: transparent; color: var(--text-muted); }
+    .install-banner__btn--ghost:hover { background: var(--bg2); }
+
     .hidden { display: none !important; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   </style>
 </head>
 <body>
 <div class="app">
+  <div id="offlineBanner" class="offline-banner" role="alert">
+    <span class="material-icons">wifi_off</span>
+    <span>You're offline — search and images won't load, but the player may still work.</span>
+  </div>
+
+  <div id="installBanner" class="install-banner" role="complementary" aria-label="Install app">
+    <span class="install-banner__icon">🍦</span>
+    <span class="install-banner__text"><strong>Add Bingqilin to your home screen</strong> for a faster, app-like experience.</span>
+    <div class="install-banner__actions">
+      <button id="installBtn" class="install-banner__btn install-banner__btn--primary" type="button">Install</button>
+      <button id="installDismiss" class="install-banner__btn install-banner__btn--ghost" type="button">Not now</button>
+    </div>
+  </div>
+
   <header class="top-bar">
     <div class="top-bar__brand" id="topBarBrand" role="button" tabindex="0" aria-label="Go to search">
       <span class="top-bar__name">🍦 Bingqilin</span>
@@ -291,6 +331,7 @@
           referrerpolicy="no-referrer" title="Video player"></iframe>
       </div>
 
+      <!-- Episode navigation — only shown for TV -->
       <div id="epNav" class="ep-nav hidden">
         <div class="ep-nav__controls">
           <button id="prevEpBtn" class="btn btn--ghost" type="button" aria-label="Previous episode">
@@ -301,12 +342,14 @@
             Next<span class="material-icons" style="font-size:18px;">skip_next</span>
           </button>
         </div>
+        <!-- Reroll button — only shown when current episode was rolled -->
         <div id="rerollRow" class="roll-strip hidden">
           <span class="roll-strip__label">Not feeling it?</span>
           <button id="rerollBtn" class="btn btn--ghost" type="button">
             <span class="material-icons" style="font-size:16px;">shuffle</span>Reroll
           </button>
         </div>
+        <!-- Rolled episode info card — shown when episode was rolled -->
         <div id="rolledEpCard" class="rolled-ep-card hidden">
           <div class="rolled-ep-card__body">
             <div class="rolled-ep-card__eyebrow">Now playing</div>
@@ -315,6 +358,7 @@
             <div class="rolled-ep-card__overview" id="rolledEpOverview"></div>
           </div>
         </div>
+        <!-- Up Next card — hidden when on last episode of series -->
         <div id="epNextCard" class="ep-next-card hidden" tabindex="0" role="button" aria-label="Play next episode">
           <div class="ep-next-card__thumb">
             <img id="epNextThumb" src="" alt="" loading="lazy" />
@@ -360,27 +404,74 @@
 
 <script src="presets.js"></script>
 <script>
-/* ── TMDB ── */
-const TMDB_BASE  = "https://api.themoviedb.org/3";
-const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMTk4Ny4zMDksInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.5tY9cdg7BSCvRV7A9GaLq-AYKnok0G116wf7ISdfKyQ";
-const TMDB_HDR   = { Authorization: `Bearer ${TMDB_TOKEN}`, "Content-Type": "application/json;charset=utf-8" };
-const EXT_SEARCH = "https://predb.me/?search=";
+/* ── PWA: Service Worker registration ── */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(reg => console.log("SW registered:", reg.scope))
+      .catch(err => console.warn("SW registration failed:", err));
+  });
+}
+
+/* ── PWA: Install prompt (Add to Home Screen) ── */
+let deferredInstallPrompt = null;
+const installBanner = document.getElementById("installBanner");
+const installBtn    = document.getElementById("installBtn");
+const installDismiss = document.getElementById("installDismiss");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Only show if not already dismissed this session
+  if (!sessionStorage.getItem("installDismissed")) {
+    installBanner.classList.add("visible");
+  }
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+  installBanner.classList.remove("visible");
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  console.log("Install prompt outcome:", outcome);
+  deferredInstallPrompt = null;
+});
+
+installDismiss.addEventListener("click", () => {
+  installBanner.classList.remove("visible");
+  sessionStorage.setItem("installDismissed", "1");
+});
+
+window.addEventListener("appinstalled", () => {
+  installBanner.classList.remove("visible");
+  deferredInstallPrompt = null;
+  console.log("Bingqilin installed as PWA");
+});
 
 /* ── PWA: Presets ── */
 const API_PRESETS = Array.isArray(window.API_PRESETS) ? window.API_PRESETS : [];
 let currentPresetIndex = (typeof window.DEFAULT_PRESET_INDEX === "number") ? window.DEFAULT_PRESET_INDEX : 0;
 if (!API_PRESETS.length) console.warn("Bingqilin: presets.js loaded no presets.");
 
+/* ── TMDB ── */
+const TMDB_BASE  = "https://api.themoviedb.org/3";
+const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTNiNWI3ODhlM2U0NDM4Y2Y2ZmY0ODI3NTJjN2Q2MSIsIm5iZiI6MTcxOTMxMTk4Ny4zMDksInN1YiI6IjY2N2E5ZTczOTdkMDQ3YWNlNTNiNWU2MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.5tY9cdg7BSCvRV7A9GaLq-AYKnok0G116wf7ISdfKyQ";
+const TMDB_HDR   = { Authorization: `Bearer ${TMDB_TOKEN}`, "Content-Type": "application/json;charset=utf-8" };
+const EXT_SEARCH = "https://predb.me/?search=";
+
 /* ── Cache & state ── */
 const cache = new Map();
 let sandboxEnabled = true;
 let currentDetail  = { mediaType: null, id: null, title: "", seasonNumbers: [] };
+// currentPlayer tracks the active player so we can restore it on back-nav
 let currentPlayer  = { mediaType: null, id: null, season: null, episode: null, label: "", extraMeta: "", url: "" };
-let loadedSeasons  = {};
+let loadedSeasons  = {};  // { [tvId]: { [seasonNum]: episodes[] } }
 let currentSeason  = null;
 let searchDebounce = null;
 let searchSeq      = 0;
 
+// FIX: Separate AbortControllers for search vs season/detail loading
+// so they can't accidentally cancel each other.
 let searchFetch = null;
 let detailFetch = null;
 
@@ -429,6 +520,13 @@ const presetSelect     = $("presetSelect");
 const sandboxCheck     = $("sandboxCheck");
 const sandboxRow       = $("sandboxRow");
 const sandboxHint      = $("sandboxHint");
+const offlineBanner    = $("offlineBanner");
+
+/* ── Offline ── */
+function updateOnline() { offlineBanner.classList.toggle("visible", !navigator.onLine); }
+window.addEventListener("online", updateOnline);
+window.addEventListener("offline", updateOnline);
+updateOnline();
 
 /* ── Helpers ── */
 function esc(s) {
@@ -448,7 +546,11 @@ function setStatus(msg, err = false) {
 }
 function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-/* ── Views ── */
+/* ── Views ──
+   FIX: setView no longer unconditionally wipes the player.
+   The player src is only cleared when explicitly navigating away via goBack(),
+   not whenever ANY view switch happens. This preserves playback when returning
+   to detail and then back to player. */
 function setView(name) {
   viewSearch.classList.toggle("view--active", name === "search");
   viewDetail.classList.toggle("view--active", name === "detail");
@@ -495,6 +597,8 @@ function loadPlayer({ mediaType, id, season, episode, label, extraMeta, rolledEp
   const url = buildPlayerUrl({ mediaType, tmdbId:id, season, episode });
   applySandbox();
 
+  // FIX: Only show overlay and set src if URL actually changed, to avoid
+  // interrupting playback when navigating back to an already-playing player.
   if (playerFrame.src !== url) {
     playerOverlay.classList.remove("hidden");
     playerFrame.src = url || "";
@@ -508,6 +612,7 @@ function loadPlayer({ mediaType, id, season, episode, label, extraMeta, rolledEp
   playerMeta.textContent  = extraMeta || (mediaType==="tv"&&season&&episode ? `S${season} · E${episode}` : mediaType==="movie" ? "Movie" : "");
   setView("player");
 
+  // Store full player context including URL so we can detect real changes
   currentPlayer = { mediaType, id, season: season||null, episode: episode||null, label: label||"", extraMeta: extraMeta||"", url };
 
   if (mediaType === "tv" && id && season && episode) {
@@ -517,11 +622,16 @@ function loadPlayer({ mediaType, id, season, episode, label, extraMeta, rolledEp
   }
 }
 
-/* ── Back navigation ── */
+/* ── Back navigation ──
+   FIX: Back from player goes to detail (not search) for TV shows.
+   For movies, it goes to search. Player iframe is only torn down when
+   going all the way back to search. ── */
 function goBackFromPlayer() {
   if (currentDetail.mediaType === "tv" && currentDetail.id) {
+    // Go back to the TV detail page — player stays alive in the background
     setView("detail");
   } else {
+    // Movie: go to search and clear the player
     playerFrame.src = "";
     playerOverlay.classList.remove("hidden");
     epNav.classList.add("hidden");
@@ -530,7 +640,9 @@ function goBackFromPlayer() {
 }
 
 function goBackFromDetail() {
+  // Leaving detail always goes to search; abort any in-flight detail/season fetches
   if (detailFetch) { detailFetch.abort(); detailFetch = null; }
+  // Only clear player if we're not coming from a TV show (TV player might be live)
   if (currentDetail.mediaType !== "tv") {
     playerFrame.src = "";
     playerOverlay.classList.remove("hidden");
@@ -540,6 +652,8 @@ function goBackFromDetail() {
 }
 
 /* ── Episode nav helpers ── */
+
+// Get flat list of all aired episodes across all loaded seasons, in order
 function getAiredEpisodeList(tvId) {
   const seasons = currentDetail.seasonNumbers || [];
   const list = [];
@@ -552,6 +666,7 @@ function getAiredEpisodeList(tvId) {
   return list;
 }
 
+// Find index of current episode in the flat list
 function findEpIndex(list, season, episode) {
   return list.findIndex(e => e.season === season && e.episode === episode);
 }
@@ -560,6 +675,8 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
   epNav.classList.remove("hidden");
 
   const allSeasons = currentDetail.seasonNumbers || [];
+
+  // Ensure current season is loaded (and adjacent seasons for seamless cross-season nav)
   const seasonIdx  = allSeasons.indexOf(season);
   const toFetch    = [season];
   if (seasonIdx > 0)                      toFetch.push(allSeasons[seasonIdx - 1]);
@@ -569,6 +686,7 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
     loadedSeasons[tvId]?.[sn] ? Promise.resolve() : fetchSeasonEps(tvId, sn).catch(() => {})
   ));
 
+  // Get episode data for label
   const eps = loadedSeasons[tvId]?.[season] || [];
   const curEp = eps.find(e => e.episode_number === episode);
   const epName = curEp?.name ? ` — ${curEp.name}` : "";
@@ -583,15 +701,19 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
   prevEpBtn.disabled = !hasPrev;
   nextEpBtn.disabled = !hasNext;
 
+  // Populate rolled episode info card — always shown for TV
   const epData = rolledEpData || (loadedSeasons[tvId]?.[season]||[]).find(e => e.episode_number === episode) || null;
   if (epData) {
     rolledEpCard.classList.remove("hidden");
+
     rolledEpTitle.textContent = epData.name
       ? `S${season} · E${episode} — ${epData.name}`
       : `S${season} · E${episode}`;
+
     rolledEpMeta.textContent = epData.air_date
       ? new Date(epData.air_date + "T00:00:00").toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" })
       : "";
+
     rolledEpOverview.textContent = epData.overview || "";
   } else {
     rolledEpCard.classList.remove("hidden");
@@ -600,8 +722,10 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
     rolledEpOverview.textContent = "";
   }
 
+  // Show reroll row only when episode was rolled
   if (rolledEpData) {
     rerollRow.classList.remove("hidden");
+    // Wire reroll button — uses the roll mode that was active (show-wide or season)
     rerollBtn.onclick = async () => {
       rerollBtn.disabled = true;
       rerollBtn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Rolling…`;
@@ -617,6 +741,7 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
     rerollRow.classList.add("hidden");
   }
 
+  // Populate "Up Next" card
   if (hasNext) {
     const next = list[idx + 1];
     const nextEpData = next.data;
@@ -631,9 +756,11 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
     epNextTitle.textContent = nextEpData.name
       ? `S${next.season} · E${next.episode} — ${nextEpData.name}`
       : `S${next.season} · E${next.episode}`;
+
     epNextMeta.textContent = nextEpData.air_date
       ? new Date(nextEpData.air_date + "T00:00:00").toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" })
       : "";
+
     epNextOverview.textContent = nextEpData.overview || "";
 
     const thumbPh = epNextThumb.parentElement.querySelector(".ep-next-card__thumb-ph");
@@ -649,7 +776,13 @@ async function updateEpNav(tvId, season, episode, rolledEpData = null) {
     }
 
     epNextCard.onclick = () => {
-      loadPlayer({ mediaType: "tv", id: tvId, season: next.season, episode: next.episode, label: currentDetail.title });
+      loadPlayer({
+        mediaType: "tv",
+        id: tvId,
+        season: next.season,
+        episode: next.episode,
+        label: currentDetail.title
+      });
     };
     epNextCard.onkeydown = e => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); epNextCard.onclick(); }
@@ -689,6 +822,7 @@ const tmdbTV           = (id,s)   => tmdbFetch(`/tv/${id}`,                  { l
 const tmdbSeason       = (id,n,s) => tmdbFetch(`/tv/${id}/season/${n}`,      { language:"en-US" }, s);
 const tmdbReleaseDates = (id,s)   => tmdbFetch(`/movie/${id}/release_dates`, {}, s);
 
+/* Returns 'theatrical' | 'home' | 'none' */
 async function getMovieReleaseStatus(movieId, signal) {
   try {
     const data = await tmdbReleaseDates(movieId, signal);
@@ -720,7 +854,7 @@ async function fetchSeasonEps(tvId, seasonNum, signal) {
   return eps;
 }
 
-/* ── Show-wide roll ── */
+/* ── Show-wide roll — picks from all aired episodes across all seasons ── */
 async function doRoll(tvId, seasonNums, label) {
   let pool = [];
   for (const sn of seasonNums) {
@@ -731,6 +865,7 @@ async function doRoll(tvId, seasonNums, label) {
   }
   if (!pool.length) { setStatus("No aired episodes to roll.", true); return; }
   const { ep, seasonNum } = randItem(pool);
+  // Tag the player context so reroll knows which mode was used
   currentPlayer._rollMode = "show";
   loadPlayer({
     mediaType: "tv", id: tvId, season: seasonNum, episode: ep.episode_number, label,
@@ -739,7 +874,7 @@ async function doRoll(tvId, seasonNums, label) {
   });
 }
 
-/* ── Within-season roll ── */
+/* ── NEW: Within-season roll — picks a random aired episode from one season ── */
 async function doRollSeason(tvId, seasonNum, label) {
   let eps = [];
   try {
@@ -748,6 +883,7 @@ async function doRollSeason(tvId, seasonNum, label) {
   } catch(e) { /* ignore */ }
   if (!eps.length) { setStatus("No aired episodes in this season.", true); return; }
   const ep = randItem(eps);
+  // Tag the player context so reroll knows which mode was used
   currentPlayer._rollMode = "season";
   currentPlayer._rollSeason = seasonNum;
   loadPlayer({
@@ -761,7 +897,9 @@ async function doRollSeason(tvId, seasonNum, label) {
 function renderResults(items) {
   resultsGrid.innerHTML = "";
   emptyState.classList.add("hidden");
-  if (!items?.length) return;
+  if (!items?.length) {
+    return;
+  }
   const frag = document.createDocumentFragment();
   items.filter(i => (i.media_type==="movie"||i.media_type==="tv") && i.id).forEach(item => {
     const isMovie = item.media_type === "movie";
@@ -787,6 +925,7 @@ function renderResults(items) {
           ${year ? `<span class="card__year">${esc(year)}</span>` : ""}
         </div>
       </div>`;
+
     frag.appendChild(art);
   });
   resultsGrid.appendChild(frag);
@@ -904,6 +1043,7 @@ function renderTV(tv) {
         </div>
         <div class="episodes-header">
           <div class="detail-section-label" id="epsHeading" style="margin-bottom:0;">Episodes</div>
+          <!-- NEW: within-season roll button, shown once a season is loaded -->
           <button class="btn btn--ghost" id="rollSeasonBtn" type="button" style="display:none;">
             <span class="material-icons" style="font-size:16px;">shuffle</span>Roll season
           </button>
@@ -936,6 +1076,7 @@ function renderTV(tv) {
     btn.innerHTML = `<span class="material-icons" style="font-size:16px;">shuffle</span>Roll`;
   });
 
+  // NEW: within-season roll — wired after seasons load in switchToSeason
   const rollSeasonBtn = $("rollSeasonBtn");
   rollSeasonBtn.addEventListener("click", async () => {
     if (!currentSeason) return;
@@ -968,6 +1109,7 @@ async function loadSeason(tvId, seasonNum) {
 
   if (heading) heading.textContent = `Season ${seasonNum}`;
 
+  // If already cached, render immediately — no loading state, no abort
   if (loadedSeasons[tvId]?.[seasonNum]) {
     renderEpisodeGrid(tvId, seasonNum, loadedSeasons[tvId][seasonNum]);
     if (rollSeasonBtn) rollSeasonBtn.style.display = "";
@@ -977,6 +1119,7 @@ async function loadSeason(tvId, seasonNum) {
   epGrid.innerHTML = `<p class="overview">Loading…</p>`;
   if (rollSeasonBtn) rollSeasonBtn.style.display = "none";
 
+  // FIX: Use dedicated detailFetch controller — won't be clobbered by search
   if (detailFetch) detailFetch.abort();
   detailFetch = new AbortController();
 
@@ -996,6 +1139,8 @@ async function loadSeason(tvId, seasonNum) {
   if (!eps.length) { epGrid.innerHTML = `<p class="overview">No episodes found.</p>`; return; }
 
   renderEpisodeGrid(tvId, seasonNum, eps);
+
+  // Show the roll-season button now that we have episodes
   if (rollSeasonBtn) rollSeasonBtn.style.display = "";
 }
 
@@ -1091,6 +1236,7 @@ async function doSearch(query) {
   const seq = ++searchSeq;
   setStatus("Searching…");
   resultsGrid.innerHTML = "";
+  // FIX: Use dedicated searchFetch — separate from detailFetch
   if (searchFetch) searchFetch.abort();
   searchFetch = new AbortController();
   try {
@@ -1121,6 +1267,7 @@ async function handleCardClick(e) {
   if (!id||!mt) return;
   detailTitle.textContent="Loading…"; detailMeta.textContent=""; detailBody.innerHTML="";
   setView("detail");
+  // FIX: Use dedicated detailFetch — won't cancel a running search
   if (detailFetch) detailFetch.abort();
   detailFetch = new AbortController();
   try {
@@ -1133,8 +1280,10 @@ async function handleCardClick(e) {
   }
 }
 resultsGrid.addEventListener("click", handleCardClick);
+// FIX: keydown handler checks for ext button to avoid double-triggering
 resultsGrid.addEventListener("keydown", e => {
   if (e.key==="Enter"||e.key===" ") {
+    // If focus is on the ext button, let its own click handler deal with it
     if (e.target.closest(".card__ext-btn")) { e.preventDefault(); e.target.click(); return; }
     const c = e.target.closest(".card");
     if (c) { e.preventDefault(); handleCardClick({ target: c }); }
@@ -1147,6 +1296,7 @@ const detailHeader = $("detailHeader");
 const playerHeader = $("playerHeader");
 
 topBarBrand.addEventListener("click", () => {
+  // Going home from player: clear player state
   if (viewPlayer.classList.contains("view--active")) {
     playerFrame.src = "";
     playerOverlay.classList.remove("hidden");
@@ -1161,6 +1311,7 @@ topBarBrand.addEventListener("keydown", e => {
 detailHeader.addEventListener("click", goBackFromDetail);
 detailHeader.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); goBackFromDetail(); } });
 
+// FIX: Back from player goes to detail for TV, search for movies
 playerHeader.addEventListener("click", goBackFromPlayer);
 playerHeader.addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" ") { e.preventDefault(); goBackFromPlayer(); } });
 
