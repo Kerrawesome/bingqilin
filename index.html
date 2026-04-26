@@ -105,7 +105,6 @@
     .card__meta { display: flex; align-items: center; justify-content: space-between; margin-top: 0.2rem; }
     .card__chip { padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--bg2); border: 1px solid var(--border); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
     .card__year { font-size: 0.76rem; color: var(--text-faint); }
-    /* pirate button — hover overlay on poster bottom-right */
     .card__ext-btn { position: absolute; bottom: 6px; right: 6px; width: 26px; height: 26px; border-radius: 999px; border: none; background: rgba(0,0,0,0.72); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity var(--t), transform var(--t); z-index: 2; }
     .card__ext-btn .material-icons { font-size: 14px; }
     .card:hover .card__ext-btn, .card:focus-within .card__ext-btn { opacity: 1; }
@@ -147,7 +146,6 @@
     .play-hero__tagline { margin: 0 0 0.35rem; font-size: 0.78rem; color: rgba(255,255,255,0.65); font-style: italic; }
     .play-hero__tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.6rem; }
     .play-hero__tag { font-size: 0.68rem; font-weight: 500; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); white-space: nowrap; }
-    /* the real play button */
     .play-hero__btn { display: inline-flex; align-items: center; gap: 0.45rem; background: var(--primary); color: #fff; border: none; border-radius: 999px; padding: 0.6rem 1.2rem; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 14px rgba(0,0,0,0.45); transition: transform 0.18s, filter 0.18s; }
     .play-hero__btn:hover { transform: translateY(-1px) scale(1.03); filter: brightness(1.08); }
     .play-hero__btn:focus-visible { outline: 3px solid rgba(255,255,255,0.8); outline-offset: 3px; }
@@ -201,7 +199,6 @@
     .ep-card__summary { margin: 0; font-size: 0.79rem; line-height: 1.45; color: var(--text-muted); }
     .ep-more-btn { border: none; background: none; color: var(--primary-dark); font-size: 0.76rem; font-weight: 500; cursor: pointer; padding: 0; margin-left: 0.2rem; font-family: 'DM Sans', sans-serif; }
     .ep-more-btn:hover { text-decoration: underline; }
-    /* watched state */
     .ep-card--watched .ep-card__img-wrap::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.38); }
     .ep-watched-tick { position: absolute; top: 6px; right: 6px; z-index: 1; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; }
     .ep-watched-tick .material-icons { font-size: 13px; }
@@ -275,6 +272,9 @@
 
     /* source cards */
     .source-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .source-list--empty { padding: 0.9rem; border-radius: 10px; background: var(--bg2); border: 1px dashed var(--border-med); text-align: center; }
+    .source-list--empty p { margin: 0; font-size: 0.82rem; color: var(--text-faint); line-height: 1.5; }
+    .source-list--empty strong { color: var(--text-muted); }
     .source-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.7rem; border-radius: 10px; border: 1.5px solid var(--border-med); background: var(--surface); cursor: pointer; transition: border-color var(--t), background var(--t); }
     .source-card:hover { background: var(--surface2); }
     .source-card--active { border-color: var(--primary); background: rgba(200,105,42,0.06); }
@@ -297,6 +297,17 @@
     .source-form__label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.1rem; display: block; }
     .source-form__hint { font-size: 0.7rem; color: var(--text-faint); }
     .source-form__actions { display: flex; gap: 0.4rem; justify-content: flex-end; margin-top: 0.15rem; }
+
+    /* ── Config import/export ── */
+    .config-area { display: flex; flex-direction: column; gap: 0.5rem; }
+    .config-textarea-wrap { position: relative; }
+    .config-textarea { width: 100%; min-height: 130px; border: 1px solid var(--border-med); border-radius: 10px; padding: 0.55rem 0.7rem; font-size: 0.78rem; font-family: 'DM Sans', monospace, sans-serif; background: var(--bg); color: var(--text); outline: none; resize: vertical; line-height: 1.55; transition: border-color var(--t); }
+    .config-textarea:focus { border-color: var(--primary); }
+    .config-textarea::placeholder { color: var(--text-faint); }
+    .config-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .config-feedback { font-size: 0.76rem; flex: 1; min-width: 0; }
+    .config-feedback--ok  { color: #2e7d32; }
+    .config-feedback--err { color: #b3261e; }
 
     /* ── Misc ── */
     .offline-banner { display: none; align-items: center; gap: 0.5rem; background: #fff3cd; border-bottom: 1px solid #f0d060; padding: 0.45rem 1rem; font-size: 0.8rem; color: #6a4a00; }
@@ -392,7 +403,6 @@
             Next<span class="material-icons" style="font-size:18px;">skip_next</span>
           </button>
         </div>
-        <!-- Now playing / reroll — single compact card -->
         <div id="nowPlayingCard" class="now-playing-card hidden">
           <div class="now-playing-card__body">
             <div class="now-playing-card__eyebrow">Now playing</div>
@@ -404,7 +414,6 @@
             <span class="material-icons">shuffle</span>
           </button>
         </div>
-        <!-- Up next -->
         <div id="epNextCard" class="ep-next-card hidden" tabindex="0" role="button" aria-label="Play next episode">
           <div class="ep-next-card__thumb">
             <img id="epNextThumb" src="" alt="" loading="lazy" />
@@ -442,24 +451,21 @@
         <button id="addSourceBtn" class="btn btn--ghost btn--sm" type="button">
           <span class="material-icons" style="font-size:16px;">add</span>Add source
         </button>
-        <button id="restoreDefaultsBtn" class="btn btn--ghost btn--sm" type="button">
-          <span class="material-icons" style="font-size:16px;">restore</span>Restore defaults
-        </button>
       </div>
       <div id="sourceForm" class="source-form hidden">
         <p class="source-form__title" id="sourceFormTitle">Add source</p>
         <div>
           <label class="source-form__label" for="sfName">Name</label>
-          <input type="text" id="sfName" placeholder="e.g. vidsrc.cc" autocomplete="off" />
+          <input type="text" id="sfName" placeholder="e.g. vid" autocomplete="off" />
         </div>
         <div>
           <label class="source-form__label" for="sfMovieUrl">Movie URL</label>
-          <input type="text" id="sfMovieUrl" placeholder="https://…/embed/movie/{tmdb}" autocomplete="off" />
+          <input type="text" id="sfMovieUrl" placeholder="https://vid/embed/movie/{tmdb}" autocomplete="off" />
           <span class="source-form__hint">Use {tmdb} for the TMDB id</span>
         </div>
         <div>
           <label class="source-form__label" for="sfTvUrl">TV URL</label>
-          <input type="text" id="sfTvUrl" placeholder="https://…/embed/tv/{tmdb}/{season}/{episode}" autocomplete="off" />
+          <input type="text" id="sfTvUrl" placeholder="https://vid/embed/tv/{tmdb}/{season}/{episode}" autocomplete="off" />
           <span class="source-form__hint">Use {tmdb}, {season}, {episode}</span>
         </div>
         <div>
@@ -470,6 +476,33 @@
         <div class="source-form__actions">
           <button id="sfCancel" class="btn btn--ghost btn--sm" type="button">Cancel</button>
           <button id="sfSave" class="btn btn--primary btn--sm" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import / Export config -->
+    <div class="settings__section">
+      <div class="settings__section-label">Import / Export config</div>
+      <p class="settings__hint">
+        Paste a config below to import sources, or export your current ones to share or back up.
+        Format: one source per block, separated by a blank line.
+        Keys: <code>name</code>, <code>movie</code>, <code>tv</code>, <code>sandbox</code>.
+        Lines starting with <code>#</code> are ignored.
+      </p>
+      <div class="config-area">
+        <div class="config-textarea-wrap">
+          <textarea id="configTextarea" class="config-textarea"
+            placeholder="name: vid&#10;movie: https://example.com/embed/movie/{tmdb}&#10;tv: https://example.com/embed/tv/{tmdb}/{season}/{episode}&#10;sandbox: allow-scripts allow-same-origin"
+            spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+        </div>
+        <div class="config-actions">
+          <span id="configFeedback" class="config-feedback" role="status" aria-live="polite"></span>
+          <button id="configImportBtn" class="btn btn--primary btn--sm" type="button">
+            <span class="material-icons" style="font-size:15px;">download</span>Import
+          </button>
+          <button id="configExportBtn" class="btn btn--ghost btn--sm" type="button">
+            <span class="material-icons" style="font-size:15px;">upload</span>Export
+          </button>
         </div>
       </div>
     </div>
@@ -486,21 +519,75 @@
 
 <script>
 /* ═══════════════════════════════════════════════════════
+   CONFIG FORMAT
+   ─────────────────────────────────────────────────────
+   One source per block, blocks separated by blank lines.
+   Keys: name, movie, tv, sandbox
+   Lines starting with # are comments and ignored.
+
+   Example:
+     name: vid
+     movie: https://video/v2/embed/movie/{tmdb}
+     tv: https://video/v2/embed/tv/{tmdb}/{season}/{episode}
+     sandbox: allow-scripts allow-same-origin
+═══════════════════════════════════════════════════════ */
+
+/* ── Config parser ── */
+function parseConfig(text) {
+  const errors = [];
+  const sources = [];
+
+  // Split into blocks on blank lines
+  const blocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+
+  blocks.forEach((block, bi) => {
+    const lines = block.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
+    if (!lines.length) return;
+
+    const obj = {};
+    lines.forEach(line => {
+      const colon = line.indexOf(":");
+      if (colon < 1) return;
+      const key = line.slice(0, colon).trim().toLowerCase();
+      const val = line.slice(colon + 1).trim();
+      obj[key] = val;
+    });
+
+    if (!obj.name) { errors.push(`Block ${bi + 1}: missing "name"`); return; }
+    if (!obj.movie) { errors.push(`Block ${bi + 1} ("${obj.name}"): missing "movie" URL`); return; }
+
+    sources.push({
+      name:      obj.name,
+      movie_url: obj.movie,
+      tv_url:    obj.tv || null,
+      sandbox:   obj.sandbox !== undefined ? obj.sandbox : "",
+    });
+  });
+
+  return { sources, errors };
+}
+
+/* ── Config serialiser ── */
+function serialiseConfig(sourceList) {
+  return sourceList.map(src => {
+    const lines = [`name: ${src.name}`, `movie: ${src.movie_url}`];
+    if (src.tv_url)  lines.push(`tv: ${src.tv_url}`);
+    if (src.sandbox !== undefined && src.sandbox !== null) lines.push(`sandbox: ${src.sandbox}`);
+    return lines.join("\n");
+  }).join("\n\n");
+}
+
+/* ═══════════════════════════════════════════════════════
    SOURCES
 ═══════════════════════════════════════════════════════ */
-const DEFAULT_SOURCES = [
-  { name: "vidsrc.cc",        movie_url: "https://vidsrc.cc/v2/embed/movie/{tmdb}",                                                       tv_url: "https://vidsrc.cc/v2/embed/tv/{tmdb}/{season}/{episode}",                                                sandbox: "allow-scripts allow-same-origin" },
-  { name: "vidsrc-embed.ru",  movie_url: "https://vidsrc-embed.ru/embed/movie?tmdb={tmdb}",                                               tv_url: "https://vidsrc-embed.ru/embed/tv?tmdb={tmdb}&season={season}&episode={episode}",                          sandbox: "allow-scripts allow-same-origin" },
-];
-
 function sourcesLoad() {
   try { const s = JSON.parse(localStorage.getItem("bq_sources")); if (Array.isArray(s) && s.length) return s; } catch {}
-  return DEFAULT_SOURCES.map(s => ({ ...s }));
+  return [];   // No hardcoded defaults — start empty
 }
 function sourcesSave(list) { try { localStorage.setItem("bq_sources", JSON.stringify(list)); } catch {} }
 
 let SOURCES = sourcesLoad();
-let activeSourceIdx = Math.min(Number(localStorage.getItem("bq_source_idx") || 0), SOURCES.length - 1);
+let activeSourceIdx = Math.min(Number(localStorage.getItem("bq_source_idx") || 0), Math.max(0, SOURCES.length - 1));
 function setActiveSource(i) { activeSourceIdx = i; try { localStorage.setItem("bq_source_idx", i); } catch {} }
 
 /* ═══════════════════════════════════════════════════════
@@ -640,7 +727,6 @@ const settingsBackdrop = $("settingsBackdrop");
 const settingsClose    = $("settingsClose");
 const sourceListEl     = $("sourceList");
 const addSourceBtn     = $("addSourceBtn");
-const restoreDefaultsBtn = $("restoreDefaultsBtn");
 const sourceForm       = $("sourceForm");
 const sourceFormTitle  = $("sourceFormTitle");
 const sfName           = $("sfName");
@@ -649,6 +735,10 @@ const sfTvUrl          = $("sfTvUrl");
 const sfSandbox        = $("sfSandbox");
 const sfCancel         = $("sfCancel");
 const sfSave           = $("sfSave");
+const configTextarea   = $("configTextarea");
+const configImportBtn  = $("configImportBtn");
+const configExportBtn  = $("configExportBtn");
+const configFeedback   = $("configFeedback");
 const clearHistoryBtn  = $("clearHistoryBtn");
 const offlineBanner    = $("offlineBanner");
 
@@ -766,7 +856,7 @@ function applySandbox() {
   if (src && typeof src.sandbox === "string") {
     val = src.sandbox;
   } else {
-    val = "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation";
+    val = "";
   }
   if (val == null || val === "") playerFrame.removeAttribute("sandbox");
   else playerFrame.setAttribute("sandbox", val);
@@ -1097,7 +1187,6 @@ function renderTV(tv) {
   const lastEp   = histLastEp(tv.id);
   const watchedEps = histGetWatchedEps(tv.id);
 
-  // Season chips — just "S1", "S2" etc, no episode count
   const chipsHtml = seasons.map(s => {
     const hasProgress = [...watchedEps].some(k => k.startsWith(`${s.season_number}:`));
     return `<button class="chip${hasProgress?" chip--has-progress":""}" type="button" data-sn="${s.season_number}" aria-pressed="false">S${s.season_number}</button>`;
@@ -1347,6 +1436,16 @@ let editingSourceIdx = -1;
 
 function renderSourceList() {
   sourceListEl.innerHTML = "";
+
+  if (!SOURCES.length) {
+    sourceListEl.innerHTML = `
+      <div class="source-list--empty">
+        <p>No sources configured.<br>
+        <strong>Import a config below</strong> or add one manually.</p>
+      </div>`;
+    return;
+  }
+
   SOURCES.forEach((src, i) => {
     const card = document.createElement("div");
     card.className = "source-card" + (i===activeSourceIdx?" source-card--active":"");
@@ -1378,10 +1477,10 @@ settingsSheet.addEventListener("click", e => {
   if (action==="up" && idx>0) { [SOURCES[idx-1],SOURCES[idx]]=[SOURCES[idx],SOURCES[idx-1]]; if (activeSourceIdx===idx) setActiveSource(idx-1); else if (activeSourceIdx===idx-1) setActiveSource(idx); sourcesSave(SOURCES); renderSourceList(); }
   else if (action==="down" && idx<SOURCES.length-1) { [SOURCES[idx],SOURCES[idx+1]]=[SOURCES[idx+1],SOURCES[idx]]; if (activeSourceIdx===idx) setActiveSource(idx+1); else if (activeSourceIdx===idx+1) setActiveSource(idx); sourcesSave(SOURCES); renderSourceList(); }
   else if (action==="edit") { editingSourceIdx=idx; const s=SOURCES[idx]; sfName.value=s.name; sfMovieUrl.value=s.movie_url; sfTvUrl.value=s.tv_url||""; sfSandbox.value=s.sandbox||""; sourceFormTitle.textContent="Edit source"; sourceForm.classList.remove("hidden"); addSourceBtn.classList.add("hidden"); sfName.focus(); }
-  else if (action==="delete") { if (SOURCES.length<=1){alert("You need at least one source.");return;} SOURCES.splice(idx,1); if (activeSourceIdx>=SOURCES.length) setActiveSource(SOURCES.length-1); sourcesSave(SOURCES); renderSourceList(); }
+  else if (action==="delete") { if (SOURCES.length<=1){if(!confirm("Delete the last source? You will need to import or add a new one."))return;} SOURCES.splice(idx,1); if (activeSourceIdx>=SOURCES.length) setActiveSource(Math.max(0,SOURCES.length-1)); sourcesSave(SOURCES); renderSourceList(); }
 });
 
-addSourceBtn.addEventListener("click", () => { editingSourceIdx=-1; sfName.value=""; sfMovieUrl.value=""; sfTvUrl.value=""; sfSandbox.value="allow-scripts allow-same-origin"; sourceFormTitle.textContent="Add source"; sourceForm.classList.remove("hidden"); addSourceBtn.classList.add("hidden"); sfName.focus(); });
+addSourceBtn.addEventListener("click", () => { editingSourceIdx=-1; sfName.value=""; sfMovieUrl.value=""; sfTvUrl.value=""; sfSandbox.value=""; sourceFormTitle.textContent="Add source"; sourceForm.classList.remove("hidden"); addSourceBtn.classList.add("hidden"); sfName.focus(); });
 sfCancel.addEventListener("click", () => { sourceForm.classList.add("hidden"); addSourceBtn.classList.remove("hidden"); });
 sfSave.addEventListener("click", () => {
   const name=sfName.value.trim(), movie_url=sfMovieUrl.value.trim(), tv_url=sfTvUrl.value.trim(), sandbox=sfSandbox.value.trim();
@@ -1392,16 +1491,33 @@ sfSave.addEventListener("click", () => {
   sourcesSave(SOURCES); renderSourceList(); sourceForm.classList.add("hidden"); addSourceBtn.classList.remove("hidden");
 });
 
-/* Restore defaults */
-restoreDefaultsBtn.addEventListener("click", () => {
-  if (!confirm("Reset sources to defaults? Your custom sources will be removed.")) return;
-  SOURCES = DEFAULT_SOURCES.map(s => ({ ...s }));
+/* ── Config import/export ── */
+function setConfigFeedback(msg, ok) {
+  configFeedback.textContent = msg;
+  configFeedback.className = "config-feedback" + (ok ? " config-feedback--ok" : ok === false ? " config-feedback--err" : "");
+  if (msg) setTimeout(() => { configFeedback.textContent = ""; configFeedback.className = "config-feedback"; }, 4000);
+}
+
+configImportBtn.addEventListener("click", () => {
+  const text = configTextarea.value.trim();
+  if (!text) { setConfigFeedback("Paste a config first.", false); return; }
+  const { sources, errors } = parseConfig(text);
+  if (errors.length) { setConfigFeedback(errors[0], false); return; }
+  if (!sources.length) { setConfigFeedback("No valid sources found.", false); return; }
+  SOURCES = sources;
   sourcesSave(SOURCES);
   setActiveSource(0);
   applySandbox();
   renderSourceList();
-  sourceForm.classList.add("hidden");
-  addSourceBtn.classList.remove("hidden");
+  configTextarea.value = "";
+  setConfigFeedback(`Imported ${sources.length} source${sources.length > 1 ? "s" : ""}.`, true);
+});
+
+configExportBtn.addEventListener("click", () => {
+  if (!SOURCES.length) { setConfigFeedback("No sources to export.", false); return; }
+  configTextarea.value = serialiseConfig(SOURCES);
+  configTextarea.select();
+  setConfigFeedback("Copied to textarea — select all and copy.", true);
 });
 
 /* ── Clear history ── */
@@ -1426,7 +1542,7 @@ settingsBackdrop.addEventListener("click", closeSettings);
 settingsSheet.addEventListener("keydown", e => {
   if (e.key==="Escape") { closeSettings(); return; }
   if (e.key==="Tab") {
-    const f=[...settingsSheet.querySelectorAll("button,select,input,[tabindex]:not([tabindex='-1'])")].filter(el=>!el.disabled);
+    const f=[...settingsSheet.querySelectorAll("button,select,input,textarea,[tabindex]:not([tabindex='-1'])")].filter(el=>!el.disabled);
     if (!f.length) return;
     const inTrap=f.includes(document.activeElement);
     if (!inTrap) { e.preventDefault(); f[0].focus(); return; }
